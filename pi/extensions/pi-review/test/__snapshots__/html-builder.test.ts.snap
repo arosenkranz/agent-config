@@ -1,0 +1,210 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
+"<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo plan: ship the widget</title>
+<style>
+  :root {
+    --bg: #14161a; --panel: #1d2026; --panel2: #232730; --border: #333846;
+    --text: #e8eaed; --muted: #9aa1ad; --accent: #7aa2f7; --accent2: #9ece6a;
+    --warn: #e0af68; --danger: #f7768e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 8px; top: 8px; background: var(--accent); color: #101216; padding: 6px 12px; border-radius: 6px; z-index: 10; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px 80px; }
+  header.page { border-bottom: 1px solid var(--border); padding: 28px 0 20px; margin-bottom: 28px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  .subtitle { color: var(--muted); font-size: 17px; }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 8px; }
+  section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; margin: 18px 0; }
+  section h2 { font-size: 22px; margin: 0 0 4px; }
+  .takeaway { color: var(--accent); font-size: 16px; margin: 0 0 14px; font-style: italic; }
+  h3 { font-size: 17px; margin: 18px 0 6px; }
+  p, li { font-size: 16px; }
+  code { background: var(--panel2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 14px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  pre { background: #101216; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; border: none; padding: 0; }
+  ul, ol { padding-left: 22px; } li { margin: 4px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 15px; }
+  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  th { background: var(--panel2); }
+  .diagram { background: #101216; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin: 12px 0; }
+  .diagram .diagram-label { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .feedback { margin-top: 18px; border-top: 1px dashed var(--border); padding-top: 16px; }
+  .feedback .fb-label { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
+  .feedback fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0 0 10px; padding: 10px 14px; }
+  .feedback legend { font-size: 14px; font-weight: 600; padding: 0 6px; }
+  .fb-options { display: flex; flex-wrap: wrap; gap: 14px; }
+  .fb-options label, .fb-check label { display: flex; align-items: center; gap: 6px; font-size: 15px; cursor: pointer; }
+  textarea { width: 100%; background: #101216; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; min-height: 60px; resize: vertical; }
+  textarea:focus, input:focus { outline: 2px solid var(--accent); }
+  .btn { background: var(--accent); color: #101216; font-weight: 700; border: none; border-radius: 8px; padding: 10px 18px; font-size: 16px; cursor: pointer; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn-secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
+  .status { margin-left: 12px; font-size: 15px; color: var(--accent2); opacity: 0; transition: opacity .2s; }
+  .status.show { opacity: 1; }
+  .bar { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding: 20px 0 10px; text-align: center; }
+  .bar .inner { display: inline-flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .response-area { margin-top: 18px; }
+  .response-area h3 { margin: 0 0 8px; }
+  #copyable-response { white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; }
+  .overall textarea { min-height: 90px; }
+  @media (max-width: 640px) { h1 { font-size: 24px; } section { padding: 16px; } }
+  @media print { .bar, .skip { display: none; } body { background: #fff; color: #111; } section { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+<header class="page">
+<h1>Demo plan: ship the widget</h1>
+<p class="subtitle">A two-phase rollout with one open decision</p>
+<p class="meta">Prepared 2026-09-09T09:57:00.000-05:00 · pi-review</p>
+</header>
+<main id="main">
+<section id="summary" data-section-id="summary" data-section-title="Executive summary">
+<h2>Executive summary</h2>
+<p class="takeaway">Ship the widget in two phases with a fallback switch.</p>
+
+<h4>What changes</h4>
+<ul><li>New <code>widget</code> module behind a flag</li><li>Rollout to 10% of traffic first</li></ul>
+<p>See <a href="https://example.com/spec">the spec</a> for details.</p>
+<div class="feedback">
+<fieldset data-feedback="decision" data-section-id="summary">
+<legend>Approve this direction?</legend>
+<div class="fb-options">
+<label><input type="radio" name="fb-decision-summary" value="agree"> <span>agree</span></label>
+<label><input type="radio" name="fb-decision-summary" value="needs changes"> <span>needs changes</span></label>
+<label><input type="radio" name="fb-decision-summary" value="question"> <span>question</span></label>
+</div></fieldset>
+
+    <label class="fb-label" for="fb-notes-summary">Notes</label>
+    <textarea id="fb-notes-summary" data-feedback="notes" data-section-id="summary" placeholder="Notes"></textarea>
+</div>
+</section>
+<section id="phase-2" data-section-id="phase-2" data-section-title="Phase 2">
+<h2>Phase 2</h2>
+<p class="takeaway">Full rollout after one week of stable metrics.</p>
+<div class="diagram"><div class="diagram-label">Diagram</div><p>flag off → 10% → 100%</p></div>
+<table><thead><tr><th>Step</th><th>Owner</th></tr></thead><tbody><tr><td>Flip flag</td><td>Alex</td></tr><tr><td>Watch dashboards</td><td>On-call</td></tr></tbody></table>
+<div class="feedback">
+<div class="fb-check">
+<label><input type="checkbox" data-feedback="approval" data-section-id="phase-2"> <span>Approve this phase</span></label>
+</div>
+
+    <label class="fb-label" for="fb-notes-phase-2">Notes</label>
+    <textarea id="fb-notes-phase-2" data-feedback="notes" data-section-id="phase-2" placeholder="Notes"></textarea>
+</div>
+</section>
+<section class="overall" data-section-id="overall" data-section-title="Overall response">
+<h2>Overall response</h2>
+<label class="fb-label" for="overall-response">Anything else the plan should change?</label>
+<textarea id="overall-response" placeholder="Overall comments, questions, or a final verdict"></textarea>
+</section>
+</main>
+<div class="bar">
+<div class="inner">
+<button type="button" class="btn" id="copy-feedback">Copy feedback for Pi</button>
+<button type="button" class="btn btn-secondary" id="reset-feedback">Reset</button>
+<span class="status" id="copy-status" role="status" aria-live="polite"></span>
+</div>
+</div>
+<section class="response-area" aria-label="Copyable response">
+<h3>Copyable response</h3>
+<pre id="copyable-response" tabindex="0"></pre>
+</section>
+</div>
+<script>
+(function () {
+  var META = {"title":"Demo plan: ship the widget","generatedAt":"2026-09-09T09:57:00.000-05:00"};
+  function buildFeedback() {
+    var lines = [];
+    lines.push("# Feedback on: " + META.title);
+    lines.push("Generated: " + META.generatedAt);
+    lines.push("");
+    var sections = document.querySelectorAll("[data-section-title]");
+    for (var i = 0; i < sections.length; i++) {
+      var el = sections[i];
+      var sid = el.getAttribute("data-section-id");
+      var title = el.getAttribute("data-section-title");
+      var decision = el.querySelector('input[type="radio"]:checked');
+      var approval = el.querySelector('input[type="checkbox"]');
+      var notesEl = el.querySelector("textarea[data-feedback='notes']");
+      var notes = notesEl ? notesEl.value.trim() : "";
+      var hasContent = decision || (approval && approval.checked) || notes;
+      if (!hasContent) continue;
+      lines.push("## " + sid + " — " + title);
+      if (decision) lines.push("Decision: " + decision.value);
+      if (approval) lines.push("Approved: " + (approval.checked ? "yes" : "no"));
+      if (notes) lines.push("Notes: " + notes);
+      lines.push("");
+    }
+    var overall = document.getElementById("overall-response");
+    if (overall && overall.value.trim()) {
+      lines.push("## Overall response");
+      lines.push(overall.value.trim());
+      lines.push("");
+    }
+    return lines.join("\\n");
+  }
+  var responseEl = document.getElementById("copyable-response");
+  function refresh() {
+    if (responseEl) responseEl.textContent = buildFeedback();
+  }
+  document.addEventListener("input", refresh);
+  document.addEventListener("change", refresh);
+  refresh();
+  var status = document.getElementById("copy-status");
+  function setStatus(text) {
+    if (!status) return;
+    status.textContent = text;
+    status.classList.add("show");
+  }
+  var copyBtn = document.getElementById("copy-feedback");
+  if (copyBtn) {
+    copyBtn.addEventListener("click", function () {
+      refresh();
+      var text = buildFeedback();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          function () { setStatus("copied — paste it back into the Pi session"); },
+          function () { fallbackCopy(); },
+        );
+      } else {
+        fallbackCopy();
+      }
+      function fallbackCopy() {
+        if (responseEl) {
+          var range = document.createRange();
+          range.selectNodeContents(responseEl);
+          var selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          setStatus("clipboard blocked — response text selected, press ⌘C");
+        }
+      }
+    });
+  }
+  var resetBtn = document.getElementById("reset-feedback");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", function () {
+      document.querySelectorAll("input[type='radio'], input[type='checkbox'], textarea").forEach(function (el) {
+        if (el.id === "copyable-response") return;
+        el.value = ""; el.checked = false;
+      });
+      refresh();
+      setStatus("reset");
+    });
+  }
+})();
+</script>
+</body>
+</html>
+"
+`;
