@@ -19,7 +19,7 @@ import { Type } from "typebox";
 import type { Static } from "typebox";
 
 import { deliverUserMessage, startFeedbackEndpoint, type FeedbackEndpoint } from "../shared/feedback.ts";
-import { renderPlanPage, renderResponsesMd, type Presentation, type PresentationSection } from "../shared/html-builder.ts";
+import { renderPlanPage, renderResponsesMd, slugify, type Presentation, type PresentationSection } from "../shared/html-builder.ts";
 import { checkProse, formatFindings, type ProseField, type SlopFinding } from "../shared/slop-check.ts";
 
 // ---------------------------------------------------------------------------
@@ -83,6 +83,12 @@ interface RawInput {
   title: string;
   subtitle?: string;
   sections: RawSection[];
+}
+
+interface NormalizedInput {
+  title: string;
+  subtitle?: string;
+  sections: SectionInput[];
 }
 
 /** Narrow the schema-widened input (StringEnum kinds arrive as string) into typed data. */
@@ -160,17 +166,6 @@ const WORKSPACE_PLANS_DIR = path.join(os.homedir(), "workspace", "agent-plans");
 function candidateBaseDirs(cwd: string): string[] {
   const piDir = process.env.PI_CODING_AGENT_DIR ?? path.join(os.homedir(), ".pi", "agent");
   return [WORKSPACE_PLANS_DIR, path.join(cwd, "agent-plans"), path.join(piDir, "agent-plans")];
-}
-
-export function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40)
-    .replace(/-+$/g, "");
 }
 
 /** Local timestamp as YYYY-MM-DD-HHMM, verified from the machine clock. */
@@ -354,6 +349,27 @@ export function registerPlanReview(pi: ExtensionAPI): void {
     }
   }
 
+  let lastPlan: NormalizedInput | undefined;
+
+  /** Validate, render, write, and open a plan presentation. Shared by the tool and /present-plan. */
+  async function presentPlanPage(ctx: ExtensionContext, input: NormalizedInput): Promise<{ text: string; opened: boolean; page: string }> {
+    validateSections(input.sections);
+
+    const findings = checkProse(collectProseFields(input.title, input.subtitle, input.sections));
+    if (findings.length > 0) {
+      throw slopRejection(findings);
+    }
+
+    const presentation = toPresentation(input, localIso(new Date()));
+    const sendToPiUrl = await startEndpointFor(ctx);
+    const { dir, page, responses } = await writePlanPage(presentation, ctx.cwd, sendToPiUrl);
+    const opened = await openInChrome(pi, page);
+    const text = opened
+      ? `Plan presentation written and opened in Chrome.\n- Page: ${page}\n- Responses fallback: ${responses}\n- Directory: ${dir}\n\n${SUCCESS_TAIL}`
+      : `Plan presentation written.\n- Page: ${page}\n- Responses fallback: ${responses}\n- Directory: ${dir}\n\n${OPEN_FAILED_TAIL}\n\n${SUCCESS_TAIL}`;
+    return { text, opened, page };
+  }
+
   pi.registerTool({
     name: "present_plan",
     label: "Present plan",
@@ -366,30 +382,50 @@ export function registerPlanReview(pi: ExtensionAPI): void {
     parameters: planParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, _ctx) {
       const input = normalizeInput(params);
-      validateSections(input.sections);
-
-      const findings = checkProse(collectProseFields(input.title, input.subtitle, input.sections));
-      if (findings.length > 0) {
-        throw slopRejection(findings);
-      }
-
-      const presentation = toPresentation(input, localIso(new Date()));
-      const sendToPiUrl = await startEndpointFor(_ctx);
-      const { dir, page, responses } = await writePlanPage(presentation, _ctx.cwd, sendToPiUrl);
-      const opened = await openInChrome(pi, page);
-      const head = opened
-        ? `Plan presentation written and opened in Chrome.\n- Page: ${page}\n- Responses fallback: ${responses}\n- Directory: ${dir}\n\n${SUCCESS_TAIL}`
-        : `Plan presentation written.\n- Page: ${page}\n- Responses fallback: ${responses}\n- Directory: ${dir}\n\n${OPEN_FAILED_TAIL}\n\n${SUCCESS_TAIL}`;
-
+      lastPlan = input;
+      const { text, opened, page } = await presentPlanPage(_ctx, input);
       return {
-        content: [
-          {
-            type: "text",
-            text: head,
-          },
-        ],
-        details: { dir, page, responses, opened },
+        content: [{ type: "text", text }],
+        details: { page, opened },
       };
+    },
+  });
+
+  pi.registerCommand("plan-review", {
+    description: "Toggle plan presentations (on|off|status)",
+    getArgumentCompletions: (prefix: string) => {
+      const items = ["on", "off", "status"].map((value) => ({ value, label: value }));
+      const filtered = items.filter((item) => item.value.startsWith(prefix));
+      return filtered.length > 0 ? filtered : null;
+    },
+    handler: async (args, ctx) => {
+      const arg = args.trim();
+      if (arg === "on" || arg === "off") {
+        enabled = arg === "on";
+        ctx.ui.notify(`Plan presentations ${arg}`, "info");
+        return;
+      }
+      if (arg === "" || arg === "status") {
+        ctx.ui.notify(`Plan presentations: ${enabled ? "on" : "off"}`, "info");
+        return;
+      }
+      ctx.ui.notify("Usage: /plan-review on|off|status", "warning");
+    },
+  });
+
+  pi.registerCommand("present-plan", {
+    description: "Re-present the last plan",
+    handler: async (_args, ctx) => {
+      if (!lastPlan) {
+        ctx.ui.notify("No plan has been presented in this session yet.", "warning");
+        return;
+      }
+      try {
+        const { page, opened } = await presentPlanPage(ctx, lastPlan);
+        ctx.ui.notify(`${opened ? "Re-presented in Chrome" : `Re-presented: ${page}`}`, "info");
+      } catch (error) {
+        ctx.ui.notify(`Re-presentation failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+      }
     },
   });
 }

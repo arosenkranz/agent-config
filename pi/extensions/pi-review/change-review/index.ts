@@ -299,4 +299,49 @@ export function registerChangeReview(pi: ExtensionAPI): void {
       };
     },
   });
+
+  pi.registerCommand("change-review", {
+    description: "Toggle the commit gate (on|off|status)",
+    getArgumentCompletions: (prefix: string) => {
+      const items = ["on", "off", "status"].map((value) => ({ value, label: value }));
+      const filtered = items.filter((item) => item.value.startsWith(prefix));
+      return filtered.length > 0 ? filtered : null;
+    },
+    handler: async (args, ctx) => {
+      const arg = args.trim();
+      if (arg === "on" || arg === "off") {
+        enabled = arg === "on";
+        ctx.ui.notify(`Commit gate ${arg}`, "info");
+        return;
+      }
+      if (arg === "" || arg === "status") {
+        ctx.ui.notify(
+          `Commit gate: ${enabled ? (ctx.hasUI ? "on" : "inactive (headless session, no UI)") : "off"}`,
+          "info",
+        );
+        return;
+      }
+      ctx.ui.notify("Usage: /change-review on|off|status", "warning");
+    },
+  });
+
+  pi.registerCommand("review-changes", {
+    description: "Open the staged-change review now",
+    handler: async (_args, ctx) => {
+      if (!enabled) {
+        ctx.ui.notify("Commit gate is off; /review-changes is inactive too. Turn it on with /change-review on.", "warning");
+        return;
+      }
+      const staged = await gitOutput(pi, ctx.cwd, ["diff", "--cached", "--name-only"]);
+      if (staged === undefined || staged.trim() === "") {
+        ctx.ui.notify("Nothing is staged to review. Stage changes first (git add).", "warning");
+        return;
+      }
+      deliverUserMessage(
+        pi,
+        ctx,
+        "The user wants the currently staged changes reviewed now. Call review_changes with the proposed commit message and a per-file explanation of the staged files, then follow the review flow.",
+      );
+    },
+  });
 }
