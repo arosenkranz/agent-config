@@ -11,6 +11,8 @@
 
 import http from "node:http";
 
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+
 // ---------------------------------------------------------------------------
 // Feedback markdown parsing
 // ---------------------------------------------------------------------------
@@ -111,6 +113,24 @@ export function parseFeedback(markdown: string): ParsedFeedback {
     result.overall = overall.join("\n").trim() || undefined;
   }
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Session delivery
+// ---------------------------------------------------------------------------
+
+/**
+ * Deliver feedback markdown into the session as a user message. While the
+ * agent is busy (typically mid tool execution), a plain sendUserMessage is
+ * not deliverable, so queue it as a follow-up that runs once the agent
+ * finishes its current work.
+ */
+export function deliverUserMessage(pi: ExtensionAPI, ctx: ExtensionContext, markdown: string): void {
+  if (ctx.isIdle()) {
+    pi.sendUserMessage(markdown);
+  } else {
+    pi.sendUserMessage(markdown, { deliverAs: "followUp" });
+  }
 }
 
 // ---------------------------------------------------------------------------

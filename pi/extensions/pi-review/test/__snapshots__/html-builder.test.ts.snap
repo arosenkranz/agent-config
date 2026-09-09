@@ -54,6 +54,12 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
   .response-area { margin-top: 18px; }
   .response-area h3 { margin: 0 0 8px; }
   #copyable-response { white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; }
+  pre.diff { font-size: 12px; line-height: 1.45; }
+  pre.diff .add { color: var(--accent2); }
+  pre.diff .del { color: var(--danger); }
+  pre.diff .hunk { color: var(--accent); }
+  pre.diff .truncated { color: var(--warn); font-style: italic; }
+  .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin: 12px 0; white-space: pre-wrap; }
   .overall textarea { min-height: 90px; }
   @media (max-width: 640px) { h1 { font-size: 24px; } section { padding: 16px; } }
   @media print { .bar, .skip { display: none; } body { background: #fff; color: #111; } section { break-inside: avoid; } }

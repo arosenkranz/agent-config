@@ -41,6 +41,18 @@ export interface Presentation {
 // Escaping and markdown
 // ---------------------------------------------------------------------------
 
+/** Filesystem/anchor-safe slug from arbitrary text. */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/g, "");
+}
+
 export function escapeHtml(text: string): string {
   return text
     .replaceAll("&", "&amp;")
@@ -261,6 +273,12 @@ function pageCss(): string {
   .response-area { margin-top: 18px; }
   .response-area h3 { margin: 0 0 8px; }
   #copyable-response { white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; }
+  pre.diff { font-size: 12px; line-height: 1.45; }
+  pre.diff .add { color: var(--accent2); }
+  pre.diff .del { color: var(--danger); }
+  pre.diff .hunk { color: var(--accent); }
+  pre.diff .truncated { color: var(--warn); font-style: italic; }
+  .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin: 12px 0; white-space: pre-wrap; }
   .overall textarea { min-height: 90px; }
   @media (max-width: 640px) { h1 { font-size: 24px; } section { padding: 16px; } }
   @media print { .bar, .skip { display: none; } body { background: #fff; color: #111; } section { break-inside: avoid; } }
@@ -510,6 +528,144 @@ ${sendButton}
     presentation.title,
     body,
     feedbackScript(presentation.title, presentation.generatedAt, options.sendToPiUrl),
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Diff review page
+// ---------------------------------------------------------------------------
+
+export interface DiffFileSection {
+  /** Repository-relative file path. */
+  path: string;
+  /** The agent's per-file explanation. */
+  explanation: string;
+  /** Unified diff for this file. */
+  diff: string;
+  /** True when the diff was truncated for the page. */
+  truncated: boolean;
+}
+
+export interface DiffReview {
+  commitMessage: string;
+  repoDir?: string;
+  /** Output of git diff --cached --stat, shown as a summary block. */
+  statSummary?: string;
+  generatedAt: string;
+  files: DiffFileSection[];
+}
+
+/** Render one diff line with add/del/hunk coloring. */
+function renderDiffLine(line: string): string {
+  const escaped = escapeHtml(line);
+  if (escaped.startsWith("+")) return `<span class="add">${escaped}</span>`;
+  if (escaped.startsWith("-")) return `<span class="del">${escaped}</span>`;
+  if (escaped.startsWith("@@")) return `<span class="hunk">${escaped}</span>`;
+  return escaped;
+}
+
+/** Render a unified diff as a colored pre block. */
+export function renderDiffText(diff: string, truncated: boolean): string {
+  const lines = diff.split("\n").map(renderDiffLine);
+  if (truncated) {
+    lines.push('<span class="truncated">--- diff truncated for this page; run `git diff --cached` in the terminal for the full diff ---</span>');
+  }
+  return `<pre class="diff"><code>${lines.join("\n")}</code></pre>`;
+}
+
+export interface DiffPageOptions extends PlanPageOptions {}
+
+/** Render the full self-contained staged-diff review page. */
+export function renderDiffPage(review: DiffReview, options: DiffPageOptions = {}): string {
+  const usedIds = new Set<string>();
+  const uniqueSectionId = (path: string): string => {
+    const base = slugify(path) || "file";
+    let id = base;
+    let suffix = 2;
+    while (usedIds.has(id)) {
+      id = `${base}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+    return id;
+  };
+
+  const fileSections = review.files
+    .map((file) => {
+      const id = uniqueSectionId(file.path);
+      const section: PresentationSection = {
+        id,
+        title: file.path,
+        takeaway: file.explanation,
+        body: renderDiffText(file.diff, file.truncated),
+        feedback: { kind: "approval", label: `Approve changes to ${file.path}` },
+      };
+      return section;
+    })
+    .map((section) => {
+      const sid = escapeHtml(section.id);
+      return `<section id="${sid}" data-section-id="${sid}" data-section-title="${escapeHtml(section.title)}">
+<h2>${escapeHtml(section.title)}</h2>
+<p class="takeaway">${escapeHtml(section.takeaway ?? "")}</p>
+${section.body}
+${feedbackControlHtml(section)}
+</section>`;
+    })
+    .join("\n");
+
+  const decisionSection: PresentationSection = {
+    id: "commit-decision",
+    title: "Commit decision",
+    takeaway: "Approve the whole commit, or reject it with comments that go straight back to the agent.",
+    body: "",
+    feedback: { kind: "decision", label: "Approve this commit as a whole?", options: ["approve", "reject"] },
+  };
+  const decisionHtml = `<section id="commit-decision" data-section-id="commit-decision" data-section-title="Commit decision">
+<h2>Commit decision</h2>
+<p class="takeaway">${escapeHtml(decisionSection.takeaway)}</p>
+${feedbackControlHtml(decisionSection)}
+</section>`;
+
+  const statHtml = review.statSummary ? `<div class="stat">${escapeHtml(review.statSummary)}</div>` : "";
+  const repoLine = review.repoDir ? ` in ${escapeHtml(review.repoDir)}` : "";
+
+  const sendButton = options.sendToPiUrl
+    ? `<button type="button" class="btn btn-secondary" id="send-feedback">Send to Pi</button>`
+    : `<button type="button" class="btn btn-secondary" id="send-feedback" disabled>Send to Pi</button>`;
+
+  const body = `<header class="page">
+<h1>Commit review${repoLine}</h1>
+<p class="subtitle">Proposed commit message</p>
+<div class="stat">${escapeHtml(review.commitMessage)}</div>
+${statHtml}
+<p class="meta">Prepared ${escapeHtml(review.generatedAt)} · pi-review</p>
+</header>
+<main id="main">
+${fileSections}
+${decisionHtml}
+<section class="overall" data-section-id="overall" data-section-title="Overall response">
+<h2>Overall response</h2>
+<label class="fb-label" for="overall-response">Anything else the commit should change?</label>
+<textarea id="overall-response" placeholder="Overall comments or questions"></textarea>
+</section>
+</main>
+<div class="bar">
+<div class="inner">
+<button type="button" class="btn" id="copy-feedback">Copy feedback for Pi</button>
+${sendButton}
+<button type="button" class="btn btn-secondary" id="reset-feedback">Reset</button>
+<span class="status" id="copy-status" role="status" aria-live="polite"></span>
+</div>
+</div>
+<section class="response-area" aria-label="Copyable response">
+<h3>Copyable response</h3>
+<pre id="copyable-response" tabindex="0"></pre>
+</section>`;
+
+  return shell(
+    "Commit review",
+    body,
+    feedbackScript("Commit review", review.generatedAt, options.sendToPiUrl),
   );
 }
 

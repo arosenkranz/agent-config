@@ -18,7 +18,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Type } from "typebox";
 import type { Static } from "typebox";
 
-import { startFeedbackEndpoint, type FeedbackEndpoint } from "../shared/feedback.ts";
+import { deliverUserMessage, startFeedbackEndpoint, type FeedbackEndpoint } from "../shared/feedback.ts";
 import { renderPlanPage, renderResponsesMd, type Presentation, type PresentationSection } from "../shared/html-builder.ts";
 import { checkProse, formatFindings, type ProseField, type SlopFinding } from "../shared/slop-check.ts";
 
@@ -336,12 +336,7 @@ export function registerPlanReview(pi: ExtensionAPI): void {
 
   /** Deliver feedback markdown into the session as a user message. */
   function deliverFeedback(ctx: ExtensionContext, markdown: string): void {
-    try {
-      pi.sendUserMessage(markdown);
-    } catch {
-      // Streaming without deliverAs throws; queue as a follow-up.
-      pi.sendUserMessage(markdown, { deliverAs: "followUp" });
-    }
+    deliverUserMessage(pi, ctx, markdown);
     if (ctx.hasUI) {
       ctx.ui.notify("Feedback received from the plan page", "info");
     }
