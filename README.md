@@ -1,12 +1,22 @@
 # claude-code-config
 
-A personal Claude Code marketplace with 7 plugins: 57+ skills, 8 agents, and a full dev environment automation stack (hooks, coding standards, Claude Island integration).
+A personal Claude Code marketplace with 7 plugins: 57+ skills, 8 agents, and a full dev environment automation stack (hooks, coding standards, Claude Island integration). The same plugins also work in the [pi](https://github.com/earendil-works/pi-coding-agent) coding agent via the bundled sync extension in [`pi/`](pi/README.md).
 
 ## How it works
 
 This repo is a Claude Code plugin marketplace hosted on GitHub. Claude Code supports registering external GitHub repos as marketplaces via `extraKnownMarketplaces` in `~/.claude/settings.json` — once registered, plugins from the repo can be enabled and auto-updated like any other Claude Code plugin.
 
 See the [Claude Code plugin marketplace docs](https://code.claude.com/docs/en/plugin-marketplaces) for how marketplaces work, and [discover and install plugins](https://code.claude.com/docs/en/discover-plugins) for how to register and enable them.
+
+## Pi integration
+
+The [`pi/`](pi/README.md) directory holds a local fork of the `claude-marketplace` pi extension. On pi startup it reads the same `~/.claude/settings.json` (marketplaces + enabled plugins) and exposes every enabled plugin's skills, commands, and agents to pi:
+
+- skills → `/skill:<name>` (auto-loaded when relevant)
+- commands → `/<plugin>:<command>`
+- agents → `/<plugin>:agent:<agent>` (e.g. `/goldeneye-agents:agent:trevelyan`)
+
+This fork fixes an upstream crash: marketplace manifests with object-form plugin `source` entries (newer `claude-plugins-official`, `superpowers-marketplace`) aborted the whole sync; the fork skips those plugins with a warning instead. Enable it once in `~/.pi/agent/settings.json` (`packages` entry, see [`pi/README.md`](pi/README.md#install)) — after that, plugins enabled in Claude Code work in pi automatically, no duplicate configuration.
 
 ## Setup on a new machine
 
@@ -43,6 +53,16 @@ See `config-templates/settings.json.template` for a complete starting point.
 cp config-templates/CLAUDE.md.template ~/.claude/CLAUDE.md
 # Edit it — add your machine-specific paths, identity, infrastructure context
 ```
+
+### 4. Register the plugins in pi (optional)
+
+Add the forked sync extension to the `packages` array in `~/.pi/agent/settings.json`:
+
+```json
+"../../workspace/claude-code-config/pi"
+```
+
+Restart pi, then run `/claude-marketplace` to confirm the sync. See [`pi/README.md`](pi/README.md) for details.
 
 ---
 
