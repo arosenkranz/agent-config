@@ -1,0 +1,47 @@
+{
+  "name": "claude-code-config-pi-claude-marketplace",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Local fork (claude-code-config) of the pi extension that bridges Claude Code plugin marketplaces into pi: syncs enabled marketplace plugins' skills and commands, and resolves ${CLAUDE_PLUGIN_ROOT} references. Skips object-source (external git) plugin entries instead of crashing the sync.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "keywords": [
+    "pi-package",
+    "datadog-pi-package",
+    "pi-extension",
+    "claude",
+    "claude-code",
+    "marketplace",
+    "skills"
+  ],
+  "files": [
+    "extensions/claude-marketplace/**/*.ts",
+    "README.md",
+    "CHANGELOG.md",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "test": "tsx extensions/claude-marketplace/test.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "check": "npm run typecheck && npm test"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/claude-marketplace/index.ts"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  }
+}

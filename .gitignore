@@ -26,6 +26,9 @@ settings.local.json
 .env
 *.local.md
 
+# Pi extension dependencies
+node_modules/
+
 # Python artifacts
 __pycache__/
 *.pyc
