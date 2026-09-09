@@ -9,6 +9,7 @@
  *   after the first delivery or after a timeout.
  */
 
+import { randomUUID } from "node:crypto";
 import http from "node:http";
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
@@ -155,6 +156,9 @@ export function startFeedbackEndpoint(
   onFeedback: (markdown: string) => Promise<void> | void,
   options: { timeoutMs?: number } = {},
 ): Promise<FeedbackEndpoint> {
+  // A random token in the URL path stops other web pages in the user's
+  // browser from posting forged feedback to a port-scanned endpoint.
+  const token = randomUUID();
   const timeoutMs = options.timeoutMs ?? FEEDBACK_ENDPOINT_TIMEOUT_MS;
   let closed = false;
   let timer: NodeJS.Timeout | undefined;
@@ -169,7 +173,11 @@ export function startFeedbackEndpoint(
       res.end();
       return;
     }
-    if (req.method !== "POST" || !req.url?.startsWith("/feedback")) {
+    // Only the exact token URL is valid; also require a localhost Host header
+    // so DNS-rebound pages cannot reach the endpoint.
+    const expectedUrl = `/feedback/${token}`;
+    const host = req.headers.host ?? "";
+    if (req.method !== "POST" || req.url !== expectedUrl || !host.startsWith("127.0.0.1:")) {
       res.writeHead(404, { "Content-Type": "text/plain" });
       res.end("not found");
       return;
@@ -223,7 +231,7 @@ export function startFeedbackEndpoint(
       timer = setTimeout(close, timeoutMs);
       resolve({
         port: address.port,
-        url: `http://127.0.0.1:${address.port}/feedback`,
+        url: `http://127.0.0.1:${address.port}/feedback/${token}`,
         close,
       });
     });

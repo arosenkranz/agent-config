@@ -107,6 +107,17 @@ describe("renderPlanPage", () => {
     expect(html).toContain('data-feedback="approval"');
   });
 
+  it("cannot break out of the inline script tag via the title", () => {
+    const hostile: Presentation = {
+      title: 'x</script><script>alert(1)</script>',
+      generatedAt: "2026-09-09T00:00:00.000Z",
+      sections: [{ id: "s", title: "t", takeaway: "k", body: "b" }],
+    };
+    const html = renderPlanPage(hostile);
+    expect(html).not.toContain("</script><script>alert(1)");
+    expect(html).toContain("\\u003c");
+  });
+
   it("escapes hostile section content", () => {
     const hostile: Presentation = {
       title: '"><script>alert(1)</script>',

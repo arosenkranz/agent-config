@@ -330,9 +330,23 @@ function feedbackControlHtml(section: PresentationSection): string {
  * and copies it to the clipboard (with a manual-copy fallback for
  * file:// pages where scripted clipboard writes are blocked).
  */
+/**
+ * JSON for safe embedding inside a <script> tag: JSON.stringify alone does
+ * not escape "</script>", "<!--", or U+2028/2029, all of which can break the
+ * script context or the JS string literal.
+ */
+export function jsonForScript(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: string): string {
-  const meta = JSON.stringify({ title: pageTitle, generatedAt });
-  const sendUrl = JSON.stringify(sendToPiUrl ?? null);
+  const meta = jsonForScript({ title: pageTitle, generatedAt });
+  const sendUrl = jsonForScript(sendToPiUrl ?? null);
   return `
 (function () {
   var META = ${meta};

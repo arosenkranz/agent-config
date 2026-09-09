@@ -74,7 +74,7 @@ describe("startFeedbackEndpoint", () => {
     endpoints.push(endpoint);
 
     expect(endpoint.port).toBeGreaterThan(0);
-    expect(endpoint.url).toBe(`http://127.0.0.1:${endpoint.port}/feedback`);
+    expect(endpoint.url).toMatch(new RegExp(`^http://127\\.0\\.0\\.1:${endpoint.port}/feedback/[0-9a-f-]{36}$`));
 
     const res = await fetch(endpoint.url, {
       method: "POST",
@@ -97,11 +97,15 @@ describe("startFeedbackEndpoint", () => {
     expect(preflight.headers.get("access-control-allow-origin")).toBe("*");
   });
 
-  it("returns 404 for non-feedback routes", async () => {
+  it("returns 404 for wrong paths, wrong tokens, and missing-token paths", async () => {
     const endpoint = await startFeedbackEndpoint(() => {});
     endpoints.push(endpoint);
-    const res = await fetch(`http://127.0.0.1:${endpoint.port}/other`, { method: "POST" });
-    expect(res.status).toBe(404);
+    const res1 = await fetch(`http://127.0.0.1:${endpoint.port}/other`, { method: "POST" });
+    const res2 = await fetch(`http://127.0.0.1:${endpoint.port}/feedback/not-the-token`, { method: "POST" });
+    const res3 = await fetch(`http://127.0.0.1:${endpoint.port}/feedback`, { method: "POST" });
+    expect(res1.status).toBe(404);
+    expect(res2.status).toBe(404);
+    expect(res3.status).toBe(404);
   });
 
   it("closes after the timeout", async () => {
