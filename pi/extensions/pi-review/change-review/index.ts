@@ -166,15 +166,15 @@ export function registerChangeReview(pi: ExtensionAPI): void {
     const invocations = findCommitInvocations(event.input.command);
     if (invocations.length === 0) return;
 
-    if (invocations.some((invocation) => invocation.commitsAllTracked && !invocation.noReview)) {
-      return { block: true, reason: ALL_FLAG_REASON };
-    }
-
     const gated = invocations.filter((invocation) => !invocation.noReview);
     if (gated.length === 0) {
       // Bypass requested: strip the marker so git never sees it.
       event.input.command = stripNoReviewFlag(event.input.command);
       return;
+    }
+
+    if (gated.some((invocation) => invocation.commitsAllTracked)) {
+      return { block: true, reason: ALL_FLAG_REASON };
     }
 
     const treeHash = await stagedTreeHash(pi, ctx.cwd);

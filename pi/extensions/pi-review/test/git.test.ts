@@ -74,6 +74,12 @@ describe("findCommitInvocations", () => {
     expect(findCommitInvocations("git commit -m x")[0].commitsAllTracked).toBe(false);
   });
 
+  it("parses -am \"msg\" as all-tracked with the real message", () => {
+    const [inv] = findCommitInvocations('git commit -am "fix the thing"');
+    expect(inv.commitsAllTracked).toBe(true);
+    expect(inv.message).toBe("fix the thing");
+  });
+
   it("keeps gated and bypassed invocations distinct in one compound command", () => {
     const invocations = findCommitInvocations('git commit --no-review -m a && git commit -m b');
     expect(invocations).toHaveLength(2);

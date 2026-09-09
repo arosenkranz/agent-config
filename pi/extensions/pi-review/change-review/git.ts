@@ -177,12 +177,16 @@ function parseCommitArgs(args: ShellWord[]): Pick<CommitInvocation, "message" | 
       i += word.text.startsWith("--file=") ? 1 : 2;
       continue;
     }
-    if (word.text === "-a" || word.text === "--all" || word.text === "-am" || word.text === "-amend") {
-      // -am and -amend carry both -a and a message flag; treat as -a plus message below.
+    if (word.text === "-am" && i + 1 < args.length) {
+      // -am "msg" is -a plus -m: the next word is the message.
       commitsAllTracked = true;
-      if (word.text.length > 2) {
-        messages.push(word.text.slice(2));
-      }
+      messages.push(args[i + 1].text);
+      i += 2;
+      continue;
+    }
+    if (word.text === "-a" || word.text === "--all" || /^-[a-z]*a[a-z]*$/.test(word.text)) {
+      // -a or a short-flag cluster containing -a (e.g. -ae): all-tracked commit.
+      commitsAllTracked = true;
       i += 1;
       continue;
     }
