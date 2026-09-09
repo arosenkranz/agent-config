@@ -79,6 +79,16 @@ describe("renderPlanPage", () => {
     expect(renderPlanPage(demoPresentation)).toMatchSnapshot();
   });
 
+  it("disables Send to Pi without an endpoint and embeds the URL with one", () => {
+    const withoutEndpoint = renderPlanPage(demoPresentation);
+    expect(withoutEndpoint).toContain('id="send-feedback" disabled');
+
+    const withEndpoint = renderPlanPage(demoPresentation, { sendToPiUrl: "http://127.0.0.1:54321/feedback" });
+    expect(withEndpoint).not.toContain('id="send-feedback" disabled');
+    expect(withEndpoint).toContain("http://127.0.0.1:54321/feedback");
+    expect(withEndpoint).toContain("endpoint closed");
+  });
+
   it("produces a self-contained page with required structure", () => {
     const html = renderPlanPage(demoPresentation);
     expect(html).toContain("<!DOCTYPE html>");

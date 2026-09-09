@@ -111,6 +111,7 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
 <div class="bar">
 <div class="inner">
 <button type="button" class="btn" id="copy-feedback">Copy feedback for Pi</button>
+<button type="button" class="btn btn-secondary" id="send-feedback" disabled>Send to Pi</button>
 <button type="button" class="btn btn-secondary" id="reset-feedback">Reset</button>
 <span class="status" id="copy-status" role="status" aria-live="polite"></span>
 </div>
@@ -201,6 +202,33 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
       refresh();
       setStatus("reset");
     });
+  }
+  var sendBtn = document.getElementById("send-feedback");
+  if (sendBtn) {
+    if (!null) {
+      sendBtn.disabled = true;
+      sendBtn.title = "No feedback endpoint for this page; use Copy feedback for Pi";
+    } else {
+      sendBtn.addEventListener("click", function () {
+        refresh();
+        sendBtn.disabled = true;
+        setStatus("sending...");
+        fetch(null, { method: "POST", headers: { "Content-Type": "text/plain" }, body: buildFeedback() })
+          .then(function (res) {
+            if (res.ok) {
+              setStatus("sent — check your Pi session");
+              sendBtn.textContent = "Sent";
+            } else {
+              setStatus("send failed (" + res.status + ") — use Copy feedback for Pi");
+              sendBtn.disabled = false;
+            }
+          })
+          .catch(function () {
+            setStatus("endpoint closed — use Copy feedback for Pi");
+            sendBtn.textContent = "Send to Pi (closed)";
+          });
+      });
+    }
   }
 })();
 </script>

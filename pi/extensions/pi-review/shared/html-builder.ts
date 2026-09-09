@@ -312,8 +312,9 @@ function feedbackControlHtml(section: PresentationSection): string {
  * and copies it to the clipboard (with a manual-copy fallback for
  * file:// pages where scripted clipboard writes are blocked).
  */
-function feedbackScript(pageTitle: string, generatedAt: string): string {
+function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: string): string {
   const meta = JSON.stringify({ title: pageTitle, generatedAt });
+  const sendUrl = JSON.stringify(sendToPiUrl ?? null);
   return `
 (function () {
   var META = ${meta};
@@ -396,6 +397,33 @@ function feedbackScript(pageTitle: string, generatedAt: string): string {
       setStatus("reset");
     });
   }
+  var sendBtn = document.getElementById("send-feedback");
+  if (sendBtn) {
+    if (!${sendUrl}) {
+      sendBtn.disabled = true;
+      sendBtn.title = "No feedback endpoint for this page; use Copy feedback for Pi";
+    } else {
+      sendBtn.addEventListener("click", function () {
+        refresh();
+        sendBtn.disabled = true;
+        setStatus("sending...");
+        fetch(${sendUrl}, { method: "POST", headers: { "Content-Type": "text/plain" }, body: buildFeedback() })
+          .then(function (res) {
+            if (res.ok) {
+              setStatus("sent — check your Pi session");
+              sendBtn.textContent = "Sent";
+            } else {
+              setStatus("send failed (" + res.status + ") — use Copy feedback for Pi");
+              sendBtn.disabled = false;
+            }
+          })
+          .catch(function () {
+            setStatus("endpoint closed — use Copy feedback for Pi");
+            sendBtn.textContent = "Send to Pi (closed)";
+          });
+      });
+    }
+  }
 })();
 `;
 }
@@ -424,8 +452,13 @@ ${body}
 `;
 }
 
+export interface PlanPageOptions {
+  /** Local endpoint the "Send to Pi" button POSTs to. */
+  sendToPiUrl?: string;
+}
+
 /** Render the full self-contained plan presentation page. */
-export function renderPlanPage(presentation: Presentation): string {
+export function renderPlanPage(presentation: Presentation, options: PlanPageOptions = {}): string {
   const sectionsHtml = presentation.sections
     .map((section) => {
       const diagram = section.diagram
@@ -443,6 +476,10 @@ ${feedbackControlHtml(section)}
 
   const head = presentation.subtitle ? `<p class="subtitle">${escapeHtml(presentation.subtitle)}</p>` : "";
 
+  const sendButton = options.sendToPiUrl
+    ? `<button type="button" class="btn btn-secondary" id="send-feedback">Send to Pi</button>`
+    : `<button type="button" class="btn btn-secondary" id="send-feedback" disabled>Send to Pi</button>`;
+
   const body = `<header class="page">
 <h1>${escapeHtml(presentation.title)}</h1>
 ${head}
@@ -459,6 +496,7 @@ ${sectionsHtml}
 <div class="bar">
 <div class="inner">
 <button type="button" class="btn" id="copy-feedback">Copy feedback for Pi</button>
+${sendButton}
 <button type="button" class="btn btn-secondary" id="reset-feedback">Reset</button>
 <span class="status" id="copy-status" role="status" aria-live="polite"></span>
 </div>
@@ -468,7 +506,11 @@ ${sectionsHtml}
 <pre id="copyable-response" tabindex="0"></pre>
 </section>`;
 
-  return shell(presentation.title, body, feedbackScript(presentation.title, presentation.generatedAt));
+  return shell(
+    presentation.title,
+    body,
+    feedbackScript(presentation.title, presentation.generatedAt, options.sendToPiUrl),
+  );
 }
 
 /** Plain-text fallback file with the same section identifiers as the page. */

@@ -14,12 +14,13 @@ import os from "node:os";
 import path from "node:path";
 
 import { StringEnum } from "@earendil-works/pi-ai";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import type { Static } from "typebox";
 
-import { checkProse, formatFindings, type ProseField, type SlopFinding } from "../shared/slop-check.ts";
+import { startFeedbackEndpoint, type FeedbackEndpoint } from "../shared/feedback.ts";
 import { renderPlanPage, renderResponsesMd, type Presentation, type PresentationSection } from "../shared/html-builder.ts";
+import { checkProse, formatFindings, type ProseField, type SlopFinding } from "../shared/slop-check.ts";
 
 // ---------------------------------------------------------------------------
 // Prompt guidance
@@ -206,10 +207,11 @@ function uniquePlanDir(baseDir: string, now: Date, slug: string): string {
 async function writePlanPage(
   presentation: Presentation,
   cwd: string,
+  sendToPiUrl?: string,
 ): Promise<{ dir: string; page: string; responses: string }> {
   const now = new Date();
   const slug = slugify(presentation.title);
-  const html = renderPlanPage(presentation);
+  const html = renderPlanPage(presentation, sendToPiUrl === undefined ? {} : { sendToPiUrl });
   const markdown = renderResponsesMd(presentation);
   const failures: string[] = [];
 
@@ -318,6 +320,12 @@ const OPEN_FAILED_TAIL = `The extension could not open Chrome directly. Open the
 
 export function registerPlanReview(pi: ExtensionAPI): void {
   let enabled = true;
+  let activeEndpoint: FeedbackEndpoint | undefined;
+
+  pi.on("session_shutdown", async () => {
+    activeEndpoint?.close();
+    activeEndpoint = undefined;
+  });
 
   pi.on("before_agent_start", async (event) => {
     if (!enabled) return;
@@ -325,6 +333,31 @@ export function registerPlanReview(pi: ExtensionAPI): void {
       systemPrompt: `${event.systemPrompt}\n\n${PLAN_GUIDANCE}`,
     };
   });
+
+  /** Deliver feedback markdown into the session as a user message. */
+  function deliverFeedback(ctx: ExtensionContext, markdown: string): void {
+    try {
+      pi.sendUserMessage(markdown);
+    } catch {
+      // Streaming without deliverAs throws; queue as a follow-up.
+      pi.sendUserMessage(markdown, { deliverAs: "followUp" });
+    }
+    if (ctx.hasUI) {
+      ctx.ui.notify("Feedback received from the plan page", "info");
+    }
+  }
+
+  /** One live feedback endpoint at a time; a new presentation replaces the old. */
+  async function startEndpointFor(ctx: ExtensionContext): Promise<string | undefined> {
+    activeEndpoint?.close();
+    activeEndpoint = undefined;
+    try {
+      activeEndpoint = await startFeedbackEndpoint((markdown) => deliverFeedback(ctx, markdown));
+      return activeEndpoint.url;
+    } catch {
+      return undefined;
+    }
+  }
 
   pi.registerTool({
     name: "present_plan",
@@ -346,7 +379,8 @@ export function registerPlanReview(pi: ExtensionAPI): void {
       }
 
       const presentation = toPresentation(input, localIso(new Date()));
-      const { dir, page, responses } = await writePlanPage(presentation, _ctx.cwd);
+      const sendToPiUrl = await startEndpointFor(_ctx);
+      const { dir, page, responses } = await writePlanPage(presentation, _ctx.cwd, sendToPiUrl);
       const opened = await openInChrome(pi, page);
       const head = opened
         ? `Plan presentation written and opened in Chrome.\n- Page: ${page}\n- Responses fallback: ${responses}\n- Directory: ${dir}\n\n${SUCCESS_TAIL}`
