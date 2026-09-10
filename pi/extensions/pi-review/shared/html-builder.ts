@@ -54,12 +54,28 @@ export function slugify(text: string): string {
 }
 
 export function escapeHtml(text: string): string {
-  return text
+  return normalizeEntities(text)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+/**
+ * Decode the five XML entities before escaping. LLM-authored markdown often
+ * arrives pre-escaped (`&lt;sandbox&gt;`); without decoding, the second escape
+ * pass would show the reader the literal text "&lt;sandbox&gt;". Decoding
+ * first is idempotent: raw text is unchanged, and single-escaped content in
+ * diffs or code blocks round-trips to the same display.
+ */
+function normalizeEntities(text: string): string {
+  return text
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&");
 }
 
 /** Safe link href: only http(s), mailto, and in-page/relative references. */
@@ -165,7 +181,7 @@ export function renderMarkdown(md: string): string {
         const tbody = body
           .map((r) => `<tr>${r.map((c) => `<td>${renderInline(escapeHtml(c))}</td>`).join("")}</tr>`)
           .join("");
-        parts.push(`<table><thead>${thead}</thead><tbody>${tbody}</tbody></table>`);
+        parts.push(`<div class="table-wrap"><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`);
       }
       continue;
     }
@@ -228,60 +244,95 @@ export function renderMarkdown(md: string): string {
 function pageCss(): string {
   return `
   :root {
-    --bg: #14161a; --panel: #1d2026; --panel2: #232730; --border: #333846;
+    --bg: #101217; --panel: #1a1d24; --panel2: #232730; --border: #333846;
     --text: #e8eaed; --muted: #9aa1ad; --accent: #7aa2f7; --accent2: #9ece6a;
-    --warn: #e0af68; --danger: #f7768e;
+    --warn: #e0af68; --danger: #f7768e; --radius: 14px;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
   .skip { position: absolute; left: -9999px; }
   .skip:focus { left: 8px; top: 8px; background: var(--accent); color: #101216; padding: 6px 12px; border-radius: 6px; z-index: 10; }
-  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px 80px; }
-  header.page { border-bottom: 1px solid var(--border); padding: 28px 0 20px; margin-bottom: 28px; }
-  h1 { font-size: 30px; margin: 0 0 6px; }
-  .subtitle { color: var(--muted); font-size: 17px; }
-  .meta { color: var(--muted); font-size: 14px; margin-top: 8px; }
-  section { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; margin: 18px 0; }
-  section h2 { font-size: 22px; margin: 0 0 4px; }
-  .takeaway { color: var(--accent); font-size: 16px; margin: 0 0 14px; font-style: italic; }
-  h3 { font-size: 17px; margin: 18px 0 6px; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 24px 20px 90px; }
+  header.page { border-bottom: 1px solid var(--border); padding: 30px 0 22px; margin-bottom: 30px; position: relative; }
+  header.page::before { content: ""; position: absolute; top: 0; left: -20px; right: -20px; height: 4px; background: linear-gradient(90deg, var(--accent), #bb9af7 55%, var(--accent2)); border-radius: 4px; }
+  h1 { font-size: 32px; margin: 0 0 8px; line-height: 1.25; letter-spacing: -0.01em; }
+  .subtitle { color: var(--muted); font-size: 18px; margin: 0 0 10px; }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+  .toc { margin-top: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
+  .toc summary { cursor: pointer; padding: 10px 16px; font-size: 15px; font-weight: 600; color: var(--muted); }
+  .toc summary:hover { color: var(--text); }
+  .toc ol { margin: 0; padding: 4px 16px 14px 40px; columns: 2; column-gap: 32px; }
+  .toc li { margin: 4px 0; break-inside: avoid; }
+  .toc a { color: var(--accent); text-decoration: none; font-size: 15px; }
+  .toc a:hover { text-decoration: underline; }
+  section { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 24px 26px; margin: 22px 0; position: relative; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+  .sec-num { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 15px; font-weight: 700; color: var(--accent); background: rgba(122, 162, 247, 0.12); border: 1px solid rgba(122, 162, 247, 0.35); border-radius: 8px; padding: 3px 9px; flex: none; }
+  section h2 { font-size: 23px; margin: 0; line-height: 1.3; letter-spacing: -0.01em; }
+  .takeaway { color: var(--text); font-size: 16.5px; margin: 0 0 18px; padding: 10px 14px; border-left: 3px solid var(--accent); background: rgba(122, 162, 247, 0.07); border-radius: 0 8px 8px 0; }
+  section.addendum { border-left-color: var(--muted); }
+  section.addendum .sec-num { color: var(--muted); background: rgba(154, 161, 173, 0.1); border-color: var(--border); }
+  section.addendum .takeaway { border-left-color: var(--muted); background: rgba(154, 161, 173, 0.07); color: var(--muted); }
+  h3 { font-size: 18px; margin: 20px 0 8px; }
   p, li { font-size: 16px; }
-  code { background: var(--panel2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 14px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-  pre { background: #101216; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
-  pre code { background: none; border: none; padding: 0; }
-  ul, ol { padding-left: 22px; } li { margin: 4px 0; }
-  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 15px; }
-  th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
-  th { background: var(--panel2); }
-  .diagram { background: #101216; border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin: 12px 0; }
+  p, li, td, th { overflow-wrap: anywhere; }
+  code { background: var(--panel2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 14px; font-family: ui-monospace, "SF Mono", Menlo, monospace; overflow-wrap: anywhere; }
+  pre { background: #0c0e12; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+  pre code { background: none; border: none; padding: 0; overflow-wrap: normal; }
+  ul, ol { padding-left: 24px; } li { margin: 5px 0; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin: 12px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; margin: 0; }
+  th, td { border-bottom: 1px solid var(--border); padding: 10px 14px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+  thead th { background: var(--panel2); text-transform: uppercase; letter-spacing: 0.06em; font-size: 12.5px; color: var(--muted); border-bottom: 2px solid var(--border); }
+  tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+  tbody tr:last-child td { border-bottom: none; }
+  .diagram { background: #0c0e12; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; overflow-x: auto; }
   .diagram .diagram-label { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-  .feedback { margin-top: 18px; border-top: 1px dashed var(--border); padding-top: 16px; }
-  .feedback .fb-label { font-weight: 600; font-size: 15px; margin-bottom: 8px; }
-  .feedback fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0 0 10px; padding: 10px 14px; }
-  .feedback legend { font-size: 14px; font-weight: 600; padding: 0 6px; }
-  .fb-options { display: flex; flex-wrap: wrap; gap: 14px; }
-  .fb-options label, .fb-check label { display: flex; align-items: center; gap: 6px; font-size: 15px; cursor: pointer; }
-  textarea { width: 100%; background: #101216; color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 15px; font-family: inherit; min-height: 60px; resize: vertical; }
-  textarea:focus, input:focus { outline: 2px solid var(--accent); }
-  .btn { background: var(--accent); color: #101216; font-weight: 700; border: none; border-radius: 8px; padding: 10px 18px; font-size: 16px; cursor: pointer; }
-  .btn:hover { filter: brightness(1.1); }
+  .feedback { margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px; }
+  .feedback .fb-label { font-weight: 600; font-size: 15px; margin-bottom: 10px; }
+  .feedback fieldset { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 12px; padding: 12px 14px; }
+  .feedback legend { font-size: 15px; font-weight: 600; padding: 0 8px; color: var(--accent); }
+  .fb-options { display: flex; flex-wrap: wrap; gap: 10px; }
+  .fb-options label { display: inline-flex; align-items: center; gap: 0; font-size: 15px; cursor: pointer; color: var(--text); background: var(--panel2); border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px 8px 12px; transition: border-color .15s, background .15s; }
+  .fb-options label:hover { border-color: var(--accent); }
+  .fb-options label:has(input:checked) { border-color: var(--accent); background: rgba(122, 162, 247, 0.14); font-weight: 600; }
+  .fb-options input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0 8px 0 2px; }
+  .fb-check label { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; cursor: pointer; margin-bottom: 12px; }
+  .fb-check input { accent-color: var(--accent); width: 18px; height: 18px; }
+  textarea { width: 100%; background: #0c0e12; color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 15px; font-family: inherit; min-height: 60px; resize: vertical; }
+  textarea:focus, input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn { background: var(--accent); color: #101216; font-weight: 700; border: none; border-radius: 10px; padding: 12px 20px; font-size: 16px; cursor: pointer; transition: transform .1s, filter .15s; }
+  .btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
   .btn-secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
   .status { margin-left: 12px; font-size: 15px; color: var(--accent2); opacity: 0; transition: opacity .2s; }
   .status.show { opacity: 1; }
-  .bar { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding: 20px 0 10px; text-align: center; }
+  .bar { position: sticky; bottom: 0; z-index: 5; background: rgba(16, 18, 23, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-top: 1px solid var(--border); padding: 14px 0 12px; text-align: center; margin-top: 26px; }
   .bar .inner { display: inline-flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
-  .response-area { margin-top: 18px; }
-  .response-area h3 { margin: 0 0 8px; }
-  #copyable-response { white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; }
+  .response-area { margin-top: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+  .response-area h3 { margin: 0 0 8px; color: var(--muted); font-size: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
+  #copyable-response { white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; margin: 0; }
+  .overall textarea { min-height: 90px; }
+  .overall { border-left-color: var(--accent2); }
   pre.diff { font-size: 12px; line-height: 1.45; }
   pre.diff .add { color: var(--accent2); }
   pre.diff .del { color: var(--danger); }
   pre.diff .hunk { color: var(--accent); }
   pre.diff .truncated { color: var(--warn); font-style: italic; }
-  .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; margin: 12px 0; white-space: pre-wrap; }
-  .overall textarea { min-height: 90px; }
-  @media (max-width: 640px) { h1 { font-size: 24px; } section { padding: 16px; } }
-  @media print { .bar, .skip { display: none; } body { background: #fff; color: #111; } section { break-inside: avoid; } }
+  .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  @media (max-width: 640px) {
+    h1 { font-size: 26px; } section { padding: 18px 16px; } .toc ol { columns: 1; }
+    .sec-head { flex-direction: column; gap: 6px; }
+  }
+  @media print {
+    .bar, .skip { display: none; }
+    body { background: #fff; color: #111; }
+    section { break-inside: avoid; border-left-color: #999; }
+    .takeaway { background: #f2f2f2; }
+    a { color: #111; }
+  }
 `;
 }
 
@@ -489,16 +540,43 @@ export interface PlanPageOptions {
   sendToPiUrl?: string;
 }
 
+/** Sections named or identified as an addendum get a muted visual treatment. */
+function isAddendum(section: PresentationSection): boolean {
+  return /addendum/i.test(section.id) || /addendum/i.test(section.title);
+}
+
+/** Section opening markup: numbered badge, heading, takeaway callout. */
+function sectionHeadHtml(section: PresentationSection, number: number): string {
+  const num = String(number).padStart(2, "0");
+  return `<div class="sec-head">
+<span class="sec-num">${num}</span>
+<h2>${escapeHtml(section.title)}</h2>
+</div>
+<p class="takeaway">${escapeHtml(section.takeaway)}</p>`;
+}
+
+/** Collapsible table of contents, shown once the plan has several sections. */
+function tocHtml(sections: PresentationSection[]): string {
+  if (sections.length < 4) return "";
+  const items = sections
+    .map((section) => `<li><a href="#${escapeHtml(section.id)}">${escapeHtml(section.title)}</a></li>`)
+    .join("");
+  return `<details class="toc">
+<summary>Contents (${sections.length} sections)</summary>
+<ol>${items}</ol>
+</details>`;
+}
+
 /** Render the full self-contained plan presentation page. */
 export function renderPlanPage(presentation: Presentation, options: PlanPageOptions = {}): string {
   const sectionsHtml = presentation.sections
-    .map((section) => {
+    .map((section, index) => {
       const diagram = section.diagram
         ? `<div class="diagram"><div class="diagram-label">Diagram</div>${renderMarkdown(section.diagram)}</div>`
         : "";
-      return `<section id="${escapeHtml(section.id)}" data-section-id="${escapeHtml(section.id)}" data-section-title="${escapeHtml(section.title)}">
-<h2>${escapeHtml(section.title)}</h2>
-<p class="takeaway">${escapeHtml(section.takeaway)}</p>
+      const addendumClass = isAddendum(section) ? " addendum" : "";
+      return `<section id="${escapeHtml(section.id)}" class="${addendumClass.trim()}" data-section-id="${escapeHtml(section.id)}" data-section-title="${escapeHtml(section.title)}">
+${sectionHeadHtml(section, index + 1)}
 ${diagram}
 ${renderMarkdown(section.body)}
 ${feedbackControlHtml(section)}
@@ -507,6 +585,7 @@ ${feedbackControlHtml(section)}
     .join("\n");
 
   const head = presentation.subtitle ? `<p class="subtitle">${escapeHtml(presentation.subtitle)}</p>` : "";
+  const toc = tocHtml(presentation.sections);
 
   const sendButton = options.sendToPiUrl
     ? `<button type="button" class="btn btn-secondary" id="send-feedback">Send to Pi</button>`
@@ -515,7 +594,8 @@ ${feedbackControlHtml(section)}
   const body = `<header class="page">
 <h1>${escapeHtml(presentation.title)}</h1>
 ${head}
-<p class="meta">Prepared ${escapeHtml(presentation.generatedAt)} · pi-review</p>
+<p class="meta"><span>Prepared ${escapeHtml(presentation.generatedAt)}</span><span>pi-review</span></p>
+${toc}
 </header>
 <main id="main">
 ${sectionsHtml}
@@ -616,11 +696,10 @@ export function renderDiffPage(review: DiffReview, options: DiffPageOptions = {}
       };
       return section;
     })
-    .map((section) => {
+    .map((section, index) => {
       const sid = escapeHtml(section.id);
       return `<section id="${sid}" data-section-id="${sid}" data-section-title="${escapeHtml(section.title)}">
-<h2>${escapeHtml(section.title)}</h2>
-<p class="takeaway">${escapeHtml(section.takeaway ?? "")}</p>
+${sectionHeadHtml(section, index + 1)}
 ${section.body}
 ${feedbackControlHtml(section)}
 </section>`;
@@ -635,8 +714,7 @@ ${feedbackControlHtml(section)}
     feedback: { kind: "decision", label: "Approve this commit as a whole?", options: ["approve", "reject"] },
   };
   const decisionHtml = `<section id="commit-decision" data-section-id="commit-decision" data-section-title="Commit decision">
-<h2>Commit decision</h2>
-<p class="takeaway">${escapeHtml(decisionSection.takeaway)}</p>
+${sectionHeadHtml(decisionSection, review.files.length + 1)}
 ${feedbackControlHtml(decisionSection)}
 </section>`;
 
@@ -652,7 +730,7 @@ ${feedbackControlHtml(decisionSection)}
 <p class="subtitle">Proposed commit message</p>
 <div class="stat">${escapeHtml(review.commitMessage)}</div>
 ${statHtml}
-<p class="meta">Prepared ${escapeHtml(review.generatedAt)} · pi-review</p>
+<p class="meta"><span>Prepared ${escapeHtml(review.generatedAt)}</span><span>pi-review</span></p>
 </header>
 <main id="main">
 ${fileSections}

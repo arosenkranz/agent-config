@@ -52,6 +52,25 @@ describe("renderMarkdown", () => {
     expect(html).toContain("<pre><code>&lt;div&gt;not markup&lt;/div&gt;</code></pre>");
   });
 
+  it("decodes pre-escaped entities instead of double-escaping them", () => {
+    const html = renderMarkdown("See http://lab-host.&lt;sandbox&gt;.instruqt.io:3000 and A &amp; B.");
+    expect(html).toContain("&lt;sandbox&gt;");
+    expect(html).not.toContain("&amp;lt;");
+    expect(html).not.toContain("&amp;gt;");
+    expect(html).toContain("A &amp; B");
+  });
+
+  it("keeps raw angle brackets escaped exactly once", () => {
+    const html = renderMarkdown("Use <sandbox> in the URL.");
+    expect(html).toContain("&lt;sandbox&gt;");
+    expect(html).not.toContain("&amp;lt;");
+  });
+
+  it("wraps tables in a scrollable container", () => {
+    const html = renderMarkdown("| A | B |\n| --- | --- |\n| 1 | 2 |");
+    expect(html).toContain('<div class="table-wrap"><table>');
+  });
+
   it("renders lists, headings, and tables", () => {
     const html = renderMarkdown("## Heading\n- one\n- two\n1. first\n\n| A | B |\n| --- | --- |\n| 1 | 2 |");
     expect(html).toContain("<h4>Heading</h4>");
@@ -77,6 +96,33 @@ describe("renderMarkdown", () => {
 describe("renderPlanPage", () => {
   it("matches the snapshot for the demo presentation", () => {
     expect(renderPlanPage(demoPresentation)).toMatchSnapshot();
+  });
+
+  it("numbers sections, marks addenda, and builds a TOC for long plans", () => {
+    const long: Presentation = {
+      title: "Long plan",
+      generatedAt: "2026-09-10T00:00:00.000Z",
+      sections: [1, 2, 3, 4, 5].map((n) => ({
+        id: n === 5 ? "addendum" : `section-${n}`,
+        title: n === 5 ? "Addendum: technical notes" : `Section ${n}`,
+        takeaway: `Takeaway ${n}.`,
+        body: "Body.",
+      })),
+    };
+    const html = renderPlanPage(long);
+    expect(html).toContain('<span class="sec-num">01</span>');
+    expect(html).toContain('<span class="sec-num">05</span>');
+    expect(html).toMatch(/<section id="addendum" class="addendum"/);
+    expect(html).toContain('class="toc"');
+    expect(html).toContain('Contents (5 sections)');
+  });
+
+  it("skips the TOC for short plans", () => {
+    expect(renderPlanPage(demoPresentation)).not.toContain('class="toc"');
+  });
+
+  it("styles radio options as chips with a visible checked state", () => {
+    expect(renderPlanPage(demoPresentation)).toContain('.fb-options label:has(input:checked)');
   });
 
   it("disables Send to Pi without an endpoint and embeds the URL with one", () => {
