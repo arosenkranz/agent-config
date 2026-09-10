@@ -2,7 +2,7 @@
   "name": "claude-code-config-pi-claude-marketplace",
   "version": "0.2.0",
   "private": true,
-  "description": "Local fork (claude-code-config) of the pi extension that bridges Claude Code plugin marketplaces into pi: syncs enabled marketplace plugins' skills and commands, and resolves ${CLAUDE_PLUGIN_ROOT} references. Skips object-source (external git) plugin entries instead of crashing the sync.",
+  "description": "Local pi extensions maintained in claude-code-config: the claude-marketplace fork (bridges Claude Code plugin marketplaces into pi, resolves ${CLAUDE_PLUGIN_ROOT} references, skips object-source plugins instead of crashing the sync) and pi-review (always-on HTML plan presentations plus a git commit review gate with feedback flow-back into the session).",
   "type": "module",
   "license": "UNLICENSED",
   "keywords": [
@@ -16,12 +16,15 @@
   ],
   "files": [
     "extensions/claude-marketplace/**/*.ts",
+    "extensions/pi-review/**/*.ts",
     "README.md",
     "CHANGELOG.md",
     "tsconfig.json"
   ],
   "scripts": {
-    "test": "tsx extensions/claude-marketplace/test.ts",
+    "test": "npm run test:marketplace && npm run test:pi-review",
+    "test:marketplace": "tsx extensions/claude-marketplace/test.ts",
+    "test:pi-review": "vitest run extensions/pi-review",
     "typecheck": "tsc -p tsconfig.json",
     "check": "npm run typecheck && npm test"
   },
@@ -39,9 +42,12 @@
     }
   },
   "devDependencies": {
+    "@earendil-works/pi-ai": "^0.85.1",
     "@earendil-works/pi-coding-agent": "*",
     "@types/node": "^24.0.0",
     "tsx": "^4.20.0",
-    "typescript": "^5.8.0"
+    "typebox": "^1.3.30",
+    "typescript": "^5.8.0",
+    "vitest": "^5.0.0"
   }
 }

@@ -18,6 +18,8 @@ The [`pi/`](pi/README.md) directory holds a local fork of the `claude-marketplac
 
 This fork fixes an upstream crash: marketplace manifests with object-form plugin `source` entries (newer `claude-plugins-official`, `superpowers-marketplace`) aborted the whole sync; the fork skips those plugins with a warning instead. Enable it once in `~/.pi/agent/settings.json` (`packages` entry, see [`pi/README.md`](pi/README.md#install)) — after that, plugins enabled in Claude Code work in pi automatically, no duplicate configuration.
 
+`pi/` also hosts **pi-review**, an always-on review gate for pi: plan presentations and commit approvals as HTML review pages, with feedback flowing back into the session. Install it with a symlink into `~/.pi/agent/extensions` — see [`pi/extensions/pi-review/README.md`](pi/extensions/pi-review/README.md).
+
 ## Setup on a new machine
 
 ### 1. Clone the repo

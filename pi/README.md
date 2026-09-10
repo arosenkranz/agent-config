@@ -1,8 +1,19 @@
-# claude-marketplace (local fork)
+# pi extensions
 
-Local fork of the `claude-marketplace` pi extension (upstream: `datadog-pi-packages/packages/claude-marketplace`), maintained in this repo so it can be fixed and extended independently. This makes `claude-code-config` the single bridge that exposes the same Claude Code plugins — including the ones in this repo — to both Claude Code (natively) and pi (through this extension).
+This directory holds the pi extensions maintained in `claude-code-config`:
+
+- **claude-marketplace** (local fork of `datadog-pi-packages/packages/claude-marketplace`) — the bridge that exposes the same Claude Code plugins, including the ones in this repo, to both Claude Code (natively) and pi. See `extensions/claude-marketplace/` and the fork notes below.
+- **pi-review** — an always-on review gate for pi: substantive plans are presented as HTML pages with per-section feedback instead of chat prose, and `git commit` is blocked until you approve the staged diff in a review page. Feedback flows back into the session. See [`extensions/pi-review/README.md`](extensions/pi-review/README.md).
 
 **Fork change:** upstream crashed the whole sync when a marketplace manifest used the newer object-form plugin `source` (for example `claude-plugins-official`, `superpowers-marketplace`), which broke all marketplace skill sync since 2026-09-01. This fork skips object-source plugins with a warning instead of crashing. See `extensions/claude-marketplace/test.ts` for the regression test.
+
+## Installing pi-review
+
+```bash
+ln -sfn ~/workspace/claude-code-config/pi/extensions/pi-review ~/.pi/agent/extensions/pi-review
+```
+
+Restart pi afterwards. Details and commands: [`extensions/pi-review/README.md`](extensions/pi-review/README.md).
 
 Claude Code plugins package **skills**, **commands**, and **agents** and share them through a marketplace. This extension reads your existing Claude Code settings, resolves the marketplaces and enabled plugins you already use, and exposes their skills, commands, and agents to pi — no duplicate configuration required.
 
