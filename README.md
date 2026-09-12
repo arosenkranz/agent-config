@@ -1,6 +1,13 @@
-# claude-code-config
+# agent-config
 
-A personal Claude Code marketplace with 7 plugins: 57+ skills, 8 agents, and a full dev environment automation stack (hooks, coding standards, Claude Island integration). The same plugins also work in the [pi](https://github.com/earendil-works/pi-coding-agent) coding agent via the bundled sync extension in [`pi/`](pi/README.md).
+Alex Rosenkranz's personal agent configuration: **skills, agents, and extensions** that work across coding agent harnesses — [Claude Code](https://claude.ai/code) and [pi](https://github.com/earendil-works/pi-coding-agent) — with 7 plugins: 57+ skills, 8 agents, and a full dev environment automation stack (hooks, coding standards, Claude Island integration).
+
+The repo's identity is the content, not any one harness. Each harness gets its own thin integration layer:
+
+- **Claude Code** consumes this repo natively as a plugin marketplace — the `.claude-plugin/` manifest is just a publish surface, not the repo's identity.
+- **pi** consumes the same content through the [`claude-marketplace` sync extension](pi/README.md) in [`pi/`](pi/), which reads your existing Claude Code settings and exposes every enabled plugin's skills, commands, and agents to pi. One configuration, both harnesses.
+
+What deliberately does **not** live here: third-party extensions, MCP servers, and host-level config (model, permissions, statusline). Machines differ materially (personal vs. work), so those stay on the host — see [Local-only files](#local-only-files).
 
 ## How it works
 
@@ -10,7 +17,7 @@ See the [Claude Code plugin marketplace docs](https://code.claude.com/docs/en/pl
 
 ## Pi integration
 
-The [`pi/`](pi/README.md) directory holds a local fork of the `claude-marketplace` pi extension. On pi startup it reads the same `~/.claude/settings.json` (marketplaces + enabled plugins) and exposes every enabled plugin's skills, commands, and agents to pi:
+The [`pi/`](pi/README.md) directory holds the pi extensions maintained in this repo. On pi startup the `claude-marketplace` fork reads the same `~/.claude/settings.json` (marketplaces + enabled plugins) and exposes every enabled plugin's skills, commands, and agents to pi:
 
 - skills → `/skill:<name>` (auto-loaded when relevant)
 - commands → `/<plugin>:<command>`
@@ -25,7 +32,7 @@ This fork fixes an upstream crash: marketplace manifests with object-form plugin
 ### 1. Clone the repo
 
 ```bash
-git clone git@github.com:arosenkranz/claude-code-config.git ~/workspace/claude-code-config
+git clone git@github.com:arosenkranz/agent-config.git ~/Code/agent-config
 ```
 
 ### 2. Register the marketplace in `~/.claude/settings.json`
@@ -34,7 +41,7 @@ git clone git@github.com:arosenkranz/claude-code-config.git ~/workspace/claude-c
 {
   "extraKnownMarketplaces": {
     "arosenkranz-claude-plugins": {
-      "source": { "source": "github", "repo": "arosenkranz/claude-code-config" }
+      "source": { "source": "github", "repo": "arosenkranz/agent-config" }
     }
   },
   "enabledPlugins": {
@@ -56,12 +63,12 @@ cp config-templates/CLAUDE.md.template ~/.claude/CLAUDE.md
 # Edit it — add your machine-specific paths, identity, infrastructure context
 ```
 
-### 4. Register the plugins in pi (optional)
+### 4. Register the plugins in pi
 
 Add the forked sync extension to the `packages` array in `~/.pi/agent/settings.json`:
 
 ```json
-"../../workspace/claude-code-config/pi"
+"../../Code/agent-config/pi"
 ```
 
 Restart pi, then run `/claude-marketplace` to confirm the sync. See [`pi/README.md`](pi/README.md) for details.
@@ -165,9 +172,11 @@ cmux, yazi, lazygit, and agent-browser are only required for specific skills.
 
 ## Local-only files
 
-These are never tracked by git — each machine maintains its own:
+These are never tracked by git — each machine maintains its own (third-party extensions, MCP config, and host-level settings included, since personal and work machines differ materially):
 
 - `~/.claude/settings.json` — model, permissions, plugins, MCP config
 - `~/.claude/CLAUDE.md` — identity, machine paths, infrastructure context
+- `~/.pi/agent/settings.json` — pi model, packages, and local extensions
+- `~/.pi/agent/extensions/` — machine-local pi extensions
 
 Start from the templates in `config-templates/`.

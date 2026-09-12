@@ -11,7 +11,7 @@ An always-on review gate for [pi](https://github.com/earendil-works/pi-coding-ag
 The code lives in this repo; pi loads it through a symlink:
 
 ```bash
-ln -sfn ~/workspace/claude-code-config/pi/extensions/pi-review ~/.pi/agent/extensions/pi-review
+ln -sfn ~/Code/agent-config/pi/extensions/pi-review ~/.pi/agent/extensions/pi-review
 ```
 
 Restart pi after creating the symlink. Verify with `pi -p "List your tool names"`; `present_plan` and `review_changes` should appear.

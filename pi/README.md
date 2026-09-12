@@ -1,6 +1,6 @@
 # pi extensions
 
-This directory holds the pi extensions maintained in `claude-code-config`:
+This directory holds the pi extensions maintained in `agent-config`:
 
 - **claude-marketplace** (local fork of `datadog-pi-packages/packages/claude-marketplace`) — the bridge that exposes the same Claude Code plugins, including the ones in this repo, to both Claude Code (natively) and pi. See `extensions/claude-marketplace/` and the fork notes below.
 - **pi-review** — an always-on review gate for pi: substantive plans are presented as HTML pages with per-section feedback instead of chat prose, and `git commit` is blocked until you approve the staged diff in a review page. Feedback flows back into the session. See [`extensions/pi-review/README.md`](extensions/pi-review/README.md).
@@ -10,7 +10,7 @@ This directory holds the pi extensions maintained in `claude-code-config`:
 ## Installing pi-review
 
 ```bash
-ln -sfn ~/workspace/claude-code-config/pi/extensions/pi-review ~/.pi/agent/extensions/pi-review
+ln -sfn ~/Code/agent-config/pi/extensions/pi-review ~/.pi/agent/extensions/pi-review
 ```
 
 Restart pi afterwards. Details and commands: [`extensions/pi-review/README.md`](extensions/pi-review/README.md).
@@ -46,7 +46,7 @@ This fork is loaded by path. In `~/.pi/agent/settings.json`, list it in `package
 ```json
 {
   "packages": [
-    "../../workspace/claude-code-config/pi"
+    "../../Code/agent-config/pi"
   ]
 }
 ```
@@ -105,7 +105,7 @@ Environment override: set `PI_CLAUDE_MARKETPLACE_DISABLED=1` to disable the exte
 ## Development
 
 ```bash
-cd ~/workspace/claude-code-config/pi
+cd ~/Code/agent-config/pi
 npm install
 npm run check   # typecheck + tests
 ```

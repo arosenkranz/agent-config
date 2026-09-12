@@ -14,7 +14,7 @@
     "arosenkranz-claude-plugins": {
       "source": {
         "source": "github",
-        "repo": "arosenkranz/claude-code-config"
+        "repo": "arosenkranz/agent-config"
       }
     }
   },

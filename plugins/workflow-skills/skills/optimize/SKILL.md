@@ -19,7 +19,7 @@ Analyze usage patterns across all installed skills and agents, then interactivel
 Run the analysis script to gather usage data:
 
 ```bash
-bash ~/Code/claude-code-config/skills/optimize/scripts/analyze-usage.sh
+bash ~/Code/agent-config/skills/optimize/scripts/analyze-usage.sh
 ```
 
 If the script fails, check that `jq` is installed (`brew install jq`) and that the usage-data directories exist.
@@ -106,7 +106,7 @@ Which ones do you want to archive? (reply with names, 'all', or 'none')"
 ```
 
 For approved archives:
-1. Move skill directory: `mv ~/Code/claude-code-config/skills/<name>/ ~/Code/claude-code-config/skills/archived/`
+1. Move skill directory: `mv ~/Code/agent-config/skills/<name>/ ~/Code/agent-config/skills/archived/`
 2. Remove symlink: `rm ~/.claude/skills/<name>`
 3. For agents: rename to `<name>.archived.md` in `~/.claude/agents/`
 
@@ -150,12 +150,12 @@ total_sessions_analyzed: <count from script>
 If any files were modified, run:
 
 ```bash
-cd ~/Code/claude-code-config && git add -A && git commit -m "chore: optimize skills and agents based on usage analysis"
+cd ~/Code/agent-config && git add -A && git commit -m "chore: optimize skills and agents based on usage analysis"
 ```
 
 ## Notes
 
-- Skills in `~/.claude/skills/` that are symlinks point to `~/Code/claude-code-config/skills/` — always edit the source, not the symlink target
+- Skills in `~/.claude/skills/` that are symlinks point to `~/Code/agent-config/skills/` — always edit the source, not the symlink target
 - Plugin skills (from `~/.claude/plugins/`) are not managed here — only standalone skills
 - When in doubt, prefer "improve description" over "archive" — a better description often fixes low usage
 - The `Skill` tool auto-trigger count (from homunculus) is more reliable than slash-command counts for skills that are auto-triggered by context

@@ -2,7 +2,7 @@
 
 ## Architecture
 
-This repo is a Claude Code marketplace with 7 plugins (30 skills, 6 agents total):
+This repo is a personal agent configuration published as a Claude Code marketplace with 7 plugins (30 skills, 6 agents total):
 - `workflow-skills` — daily-driver workflow skills invocable via `/name`
 - `goldeneye-agents` — specialized subagents (boris, m, natalya, q, trevelyan, xenia)
 - `dev-environment` — lifecycle hooks, commands (coding standards)
@@ -18,7 +18,7 @@ Skills are discovered from `plugins/<plugin>/skills/<name>/SKILL.md`; agents fro
 ## Setting up on a new machine
 
 ```bash
-git clone git@github.com:arosenkranz/claude-code-config.git ~/workspace/claude-code-config
+git clone git@github.com:arosenkranz/agent-config.git ~/Code/agent-config
 ```
 
 Add to `~/.claude/settings.json`:
@@ -26,7 +26,7 @@ Add to `~/.claude/settings.json`:
 {
   "extraKnownMarketplaces": {
     "arosenkranz-claude-plugins": {
-      "source": { "source": "github", "repo": "arosenkranz/claude-code-config" }
+      "source": { "source": "github", "repo": "arosenkranz/agent-config" }
     }
   },
   "enabledPlugins": {

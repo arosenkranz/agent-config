@@ -4,7 +4,7 @@
     "name": "Alex Rosenkranz"
   },
   "metadata": {
-    "description": "Alex Rosenkranz's Claude Code marketplace — skills, agents, and dev environment automation"
+    "description": "Alex Rosenkranz's personal agent config — skills, agents, and dev environment automation, published as a Claude Code marketplace"
   },
   "plugins": [
     {

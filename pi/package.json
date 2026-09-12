@@ -1,8 +1,8 @@
 {
-  "name": "claude-code-config-pi-claude-marketplace",
+  "name": "agent-config-pi-claude-marketplace",
   "version": "0.2.0",
   "private": true,
-  "description": "Local pi extensions maintained in claude-code-config: the claude-marketplace fork (bridges Claude Code plugin marketplaces into pi, resolves ${CLAUDE_PLUGIN_ROOT} references, skips object-source plugins instead of crashing the sync) and pi-review (always-on HTML plan presentations plus a git commit review gate with feedback flow-back into the session).",
+  "description": "Local pi extensions maintained in agent-config: the claude-marketplace fork (bridges Claude Code plugin marketplaces into pi, resolves ${CLAUDE_PLUGIN_ROOT} references, skips object-source plugins instead of crashing the sync) and pi-review (always-on HTML plan presentations plus a git commit review gate with feedback flow-back into the session).",
   "type": "module",
   "license": "UNLICENSED",
   "keywords": [
