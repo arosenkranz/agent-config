@@ -19,7 +19,7 @@ Analyze usage patterns across all installed skills and agents, then interactivel
 Run the analysis script to gather usage data:
 
 ```bash
-bash ~/Code/agent-config/skills/optimize/scripts/analyze-usage.sh
+bash <this skill's directory>/scripts/analyze-usage.sh
 ```
 
 If the script fails, check that `jq` is installed (`brew install jq`) and that the usage-data directories exist.
@@ -35,7 +35,8 @@ ls -la ~/.claude/skills/
 
 **List all installed agents:**
 ```bash
-ls ~/.claude/agents/
+ls ~/.claude/agents/ 2>/dev/null
+ls ~/.claude/plugins/marketplaces/arosenkranz-claude-plugins/plugins/goldeneye-agents/agents/
 ```
 
 **For each skill**, read its `SKILL.md` frontmatter to extract `name` and `description`:
@@ -47,7 +48,7 @@ head -5 ~/.claude/skills/<skill-name>
 
 **For each agent**, read its frontmatter:
 ```bash
-head -10 ~/.claude/agents/<agent-name>.md
+head -10 <agents-directory>/<agent-name>.md
 ```
 
 Cross-reference installed components against the usage data:
@@ -106,9 +107,15 @@ Which ones do you want to archive? (reply with names, 'all', or 'none')"
 ```
 
 For approved archives:
-1. Move skill directory: `mv ~/Code/agent-config/skills/<name>/ ~/Code/agent-config/skills/archived/`
-2. Remove symlink: `rm ~/.claude/skills/<name>`
-3. For agents: rename to `<name>.archived.md` in `~/.claude/agents/`
+1. **Repo (plugin) skills** — move the skill directory within the repo, then commit:
+   ```bash
+   cd ~/Code/agent-config
+   mkdir -p plugins/workflow-skills/skills/archived
+   mv plugins/workflow-skills/skills/<name>/ plugins/workflow-skills/skills/archived/
+   ```
+   The archived skill stops appearing once the marketplace/plugin cache re-syncs.
+2. **Standalone skills** in `~/.claude/skills/` — move to `~/.claude/skills/archived/` (create if needed)
+3. **Agents** — rename to `<name>.archived.md` in `~/.claude/agents/`
 
 ### Description Improvements
 
@@ -155,7 +162,7 @@ cd ~/Code/agent-config && git add -A && git commit -m "chore: optimize skills an
 
 ## Notes
 
-- Skills in `~/.claude/skills/` that are symlinks point to `~/Code/agent-config/skills/` — always edit the source, not the symlink target
-- Plugin skills (from `~/.claude/plugins/`) are not managed here — only standalone skills
+- Most of your skills are plugin skills from this repo, installed via the marketplace cache (`~/.claude/plugins/marketplaces/`) — edit the repo source in `plugins/<plugin>/skills/`, never the cache
+- `~/.claude/skills/` holds standalone skills only; some entries are symlinks with targets that vary per machine (e.g. `~/.agents/skills/`) — check with `readlink` before editing or removing anything
 - When in doubt, prefer "improve description" over "archive" — a better description often fixes low usage
 - The `Skill` tool auto-trigger count (from homunculus) is more reliable than slash-command counts for skills that are auto-triggered by context
