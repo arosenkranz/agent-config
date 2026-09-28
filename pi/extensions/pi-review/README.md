@@ -2,8 +2,8 @@
 
 An always-on review gate for [pi](https://github.com/earendil-works/pi-coding-agent). One extension, two modules, one shared HTML presentation engine:
 
-- **Plan reviewer.** Substantive plans (more than one step or one real decision) are presented as an interactive HTML page with per-section feedback controls, opened in Chrome, instead of written into chat. The behavior is always-on: `before_agent_start` appends the guidance to the system prompt, and the `present_plan` tool enforces plain language before the page is built.
-- **Change reviewer.** Every `git commit` is blocked until you approve the staged diff. The `review_changes` tool builds a self-contained diff page (diff first, explanation next, per-file approval) and shows an Approve/Reject dialog as the fallback path. Approval is keyed to the staged tree hash, so an approval only ever lets through the exact reviewed content, once.
+- **Plan reviewer.** Substantive plans (more than one step or one real decision) are presented as an interactive HTML page with per-section feedback controls, opened in Chrome, instead of written into chat. The behavior is always-on: `before_agent_start` appends the guidance to the system prompt, and the `present_plan` tool enforces plain language before the page is built. Plans open with the big picture: what changes in the codebase and what the user notices, before technical detail (which lives in a final "Addendum" section). The guidance asks for a colleague voice: contractions, plain words, short sentences.
+- **Change reviewer.** Every `git commit` is blocked until you approve the staged diff. The `review_changes` tool builds a self-contained diff page (diff first, explanation next, per-file approval) and shows an Approve/Reject dialog as the fallback path. Per-file explanations lead with the functional impact, then the implementation detail. Approval is keyed to the staged tree hash, so an approval only ever lets through the exact reviewed content, once.
 - **Feedback loop.** Every page has a "Copy feedback for Pi" button (always works) and a "Send to Pi" button that POSTs to a short-lived localhost endpoint the extension runs while the page is open. Feedback lands back in the session as a user message.
 
 ## Install
@@ -45,6 +45,16 @@ Sandboxed pi sessions can only write under the session workdir and a few granted
 - Opening Chrome can be denied by the sandbox. When that happens the tool tells the agent to open the page with its bash tool, or to give you the path and the `open -a "Google Chrome" ...` command to run.
 - Every page is fully self-contained (inline CSS/JS, no network), so "Copy feedback for Pi" keeps working from a stale page after the endpoint closes. The "Send to Pi" button visibly disables when its endpoint is gone.
 
+## Diagrams
+
+The `diagram` field of a plan section is a [mermaid](https://mermaid.js.org) diagram definition (usually `flowchart TD/LR`). The full mermaid bundle is vendored at `shared/vendor/mermaid.min.js` (~2.7 MB, pinned to 11.12.2) and inlined into the page, so diagrams render offline from a `file://` URL with no CDN. Pages without a diagram never embed the bundle, so they stay small. If the vendored file is missing, the diagram falls back to plain markdown rendering and the page still builds.
+
+To bump the mermaid version, replace the vendored file:
+
+```bash
+curl -sL https://cdn.jsdelivr.net/npm/mermaid@<version>/dist/mermaid.min.js -o shared/vendor/mermaid.min.js
+```
+
 ## Plan prose rules
 
 `shared/slop-check.ts` enforces the mechanical tells from the unslop skill before a page is built: puffery words (comprehensive, leverage, delve, streamline, ...), "not just X but Y" shapes, chatbot openers, hollow phrases, curly quotes, em dashes, and filler. A rejected call lists the offending lines and the agent must rewrite and call again. Technical detail is never banned; it belongs in a final "Addendum" section.
@@ -64,6 +74,8 @@ pi/extensions/pi-review/
 ├── index.ts                 # entry: wires both modules
 ├── shared/
 │   ├── html-builder.ts      # plan + diff page rendering (one engine)
+│   ├── mermaid.ts           # vendored mermaid bundle loader + script-tag escaping
+│   ├── vendor/mermaid.min.js  # pinned mermaid 11.12.2 bundle (inlined into pages with diagrams)
 │   ├── feedback.ts          # feedback markdown parser, delivery, localhost endpoint
 │   └── slop-check.ts        # plain-language rules
 ├── plan-review/index.ts     # prompt injection + present_plan tool + /plan-review, /present-plan

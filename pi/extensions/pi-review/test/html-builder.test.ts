@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   escapeHtml,
@@ -7,6 +7,17 @@ import {
   renderResponsesMd,
   type Presentation,
 } from "../shared/html-builder.ts";
+
+// Stub the mermaid loader so snapshots stay small and tests can toggle the
+// bundle on and off without reading the 2.7 MB vendored file.
+const mermaidState = vi.hoisted(() => ({ source: "/* mermaid stub for tests */" as string | undefined }));
+vi.mock("../shared/mermaid.ts", () => ({
+  loadMermaidSource: () => mermaidState.source,
+}));
+
+beforeEach(() => {
+  mermaidState.source = "/* mermaid stub for tests */";
+});
 
 const demoPresentation: Presentation = {
   title: "Demo plan: ship the widget",
@@ -25,7 +36,7 @@ const demoPresentation: Presentation = {
       title: "Phase 2",
       takeaway: "Full rollout after one week of stable metrics.",
       body: "| Step | Owner |\n| --- | --- |\n| Flip flag | Alex |\n| Watch dashboards | On-call |\n",
-      diagram: "flag off → 10% → 100%",
+      diagram: "flowchart LR\n  A[flag off] --> B[10% of traffic] --> C[100%]",
       feedback: { kind: "approval", label: "Approve this phase" },
     },
   ],
@@ -181,6 +192,49 @@ describe("renderPlanPage", () => {
     expect(html).not.toContain("<script>bad");
     expect(html).not.toContain("<img");
     expect(html).not.toContain("<script>alert('body')");
+  });
+});
+
+describe("renderPlanPage diagrams", () => {
+  it("renders a diagram as a mermaid block and inlines the bundle", () => {
+    const html = renderPlanPage(demoPresentation);
+    expect(html).toContain('<pre class="mermaid">flowchart LR');
+    expect(html).toContain("/* mermaid stub for tests */");
+    expect(html).toContain('mermaid.initialize({ startOnLoad: false, securityLevel: "strict"');
+  });
+
+  it("does not inline the bundle when no section has a diagram", () => {
+    const sections = demoPresentation.sections.map(({ diagram: _diagram, ...rest }) => rest);
+    const html = renderPlanPage({ ...demoPresentation, sections });
+    expect(html).not.toContain("mermaid stub");
+    expect(html).not.toContain('class="mermaid"');
+  });
+
+  it("falls back to markdown when the mermaid bundle is unavailable", () => {
+    mermaidState.source = undefined;
+    const html = renderPlanPage(demoPresentation);
+    expect(html).toContain("<p>flowchart LR");
+    expect(html).not.toContain('class="mermaid"');
+    expect(html).not.toContain("mermaid.initialize");
+  });
+
+  it("escapes hostile diagram content inside the mermaid block", () => {
+    const hostile: Presentation = {
+      title: "t",
+      generatedAt: "2026-09-09T00:00:00.000Z",
+      sections: [
+        {
+          id: "d",
+          title: "Diagram section",
+          takeaway: "k",
+          body: "b",
+          diagram: "flowchart TD\n  A[</pre><script>alert(1)</script>] --> B",
+        },
+      ],
+    };
+    const html = renderPlanPage(hostile);
+    expect(html).toContain("&lt;/pre&gt;&lt;script&gt;");
+    expect(html).not.toContain("<script>alert(1)");
   });
 });
 

@@ -54,6 +54,8 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
   tbody tr:last-child td { border-bottom: none; }
   .diagram { background: #0c0e12; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; overflow-x: auto; }
   .diagram .diagram-label { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .diagram pre.mermaid { background: none; border: none; padding: 0; margin: 0; display: flex; justify-content: center; overflow-x: auto; font-size: 14px; }
+  .diagram svg { max-width: 100%; height: auto; }
   .feedback { margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px; }
   .feedback .fb-label { font-weight: 600; font-size: 15px; margin-bottom: 10px; }
   .feedback fieldset { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 12px; padding: 12px 14px; }
@@ -139,7 +141,8 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
 <h2>Phase 2</h2>
 </div>
 <p class="takeaway">Full rollout after one week of stable metrics.</p>
-<div class="diagram"><div class="diagram-label">Diagram</div><p>flag off → 10% → 100%</p></div>
+<div class="diagram"><div class="diagram-label">Diagram</div><pre class="mermaid">flowchart LR
+  A[flag off] --&gt; B[10% of traffic] --&gt; C[100%]</pre></div>
 <div class="table-wrap"><table><thead><tr><th>Step</th><th>Owner</th></tr></thead><tbody><tr><td>Flip flag</td><td>Alex</td></tr><tr><td>Watch dashboards</td><td>On-call</td></tr></tbody></table></div>
 <div class="feedback">
 <div class="fb-check">
@@ -169,6 +172,17 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
 <pre id="copyable-response" tabindex="0"></pre>
 </section>
 </div>
+<script>/* mermaid stub for tests */</script>
+<script>
+(function () {
+  try {
+    mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "dark", darkMode: true });
+    mermaid.run({ querySelector: "pre.mermaid" });
+  } catch (error) {
+    console.error("pi-review: mermaid failed:", error);
+  }
+})();
+</script>
 <script>
 (function () {
   var META = {"title":"Demo plan: ship the widget","generatedAt":"2026-09-09T09:57:00.000-05:00"};

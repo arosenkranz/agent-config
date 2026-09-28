@@ -6,6 +6,8 @@
  * no server dependency. Feedback copy-back always works from the static file.
  */
 
+import { loadMermaidSource } from "./mermaid.ts";
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -289,6 +291,8 @@ function pageCss(): string {
   tbody tr:last-child td { border-bottom: none; }
   .diagram { background: #0c0e12; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; overflow-x: auto; }
   .diagram .diagram-label { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .diagram pre.mermaid { background: none; border: none; padding: 0; margin: 0; display: flex; justify-content: center; overflow-x: auto; font-size: 14px; }
+  .diagram svg { max-width: 100%; height: auto; }
   .feedback { margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px; }
   .feedback .fb-label { font-weight: 600; font-size: 15px; margin-bottom: 10px; }
   .feedback fieldset { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 12px; padding: 12px 14px; }
@@ -515,7 +519,21 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
 // Plan page
 // ---------------------------------------------------------------------------
 
-function shell(title: string, body: string, script: string): string {
+function shell(title: string, body: string, script: string, mermaidSource?: string): string {
+  const mermaidScripts = mermaidSource
+    ? `<script>${mermaidSource}</script>
+<script>
+(function () {
+  try {
+    mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "dark", darkMode: true });
+    mermaid.run({ querySelector: "pre.mermaid" });
+  } catch (error) {
+    console.error("pi-review: mermaid failed:", error);
+  }
+})();
+</script>
+`
+    : "";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -529,7 +547,7 @@ function shell(title: string, body: string, script: string): string {
 <div class="wrap">
 ${body}
 </div>
-<script>${script}</script>
+${mermaidScripts}<script>${script}</script>
 </body>
 </html>
 `;
@@ -538,6 +556,14 @@ ${body}
 export interface PlanPageOptions {
   /** Local endpoint the "Send to Pi" button POSTs to. */
   sendToPiUrl?: string;
+}
+
+/** Render one section's diagram: a mermaid block when the bundle is available, markdown otherwise. */
+function diagramHtml(diagram: string, mermaidAvailable: boolean): string {
+  const inner = mermaidAvailable
+    ? `<pre class="mermaid">${escapeHtml(diagram)}</pre>`
+    : renderMarkdown(diagram);
+  return `<div class="diagram"><div class="diagram-label">Diagram</div>${inner}</div>`;
 }
 
 /** Sections named or identified as an addendum get a muted visual treatment. */
@@ -567,13 +593,13 @@ function tocHtml(sections: PresentationSection[]): string {
 </details>`;
 }
 
+
 /** Render the full self-contained plan presentation page. */
 export function renderPlanPage(presentation: Presentation, options: PlanPageOptions = {}): string {
+  const mermaidSource = loadMermaidSource();
   const sectionsHtml = presentation.sections
     .map((section, index) => {
-      const diagram = section.diagram
-        ? `<div class="diagram"><div class="diagram-label">Diagram</div>${renderMarkdown(section.diagram)}</div>`
-        : "";
+      const diagram = section.diagram ? diagramHtml(section.diagram, mermaidSource !== undefined) : "";
       const addendumClass = isAddendum(section) ? " addendum" : "";
       return `<section id="${escapeHtml(section.id)}" class="${addendumClass.trim()}" data-section-id="${escapeHtml(section.id)}" data-section-title="${escapeHtml(section.title)}">
 ${sectionHeadHtml(section, index + 1)}
@@ -618,10 +644,14 @@ ${sendButton}
 <pre id="copyable-response" tabindex="0"></pre>
 </section>`;
 
+  const hasDiagram = presentation.sections.some((section) => section.diagram !== undefined);
+  const mermaidToEmbed = mermaidSource !== undefined && hasDiagram ? mermaidSource : undefined;
+
   return shell(
     presentation.title,
     body,
     feedbackScript(presentation.title, presentation.generatedAt, options.sendToPiUrl),
+    mermaidToEmbed,
   );
 }
 

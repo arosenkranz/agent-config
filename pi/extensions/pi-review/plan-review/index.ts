@@ -30,9 +30,13 @@ const PLAN_GUIDANCE = `## Plan presentations (always on)
 
 Before writing any substantive plan (more than one step or one real decision) in chat, call the present_plan tool. This is mandatory: do not write the full plan in chat, and do not ask the user whether they want a presentation. This replaces the html-plan-presentations skill's ask-first behavior.
 
-present_plan takes sections. Each section has a stable kebab-case id, a title, a one-sentence takeaway, a markdown body, and optionally a diagram description and a feedback control (decision, notes, or approval). After the call succeeds, tell the user the returned file paths and summarize the plan in at most three sentences. Do not restate the whole plan in chat.
+present_plan takes sections. Each section has a stable kebab-case id, a title, a one-sentence takeaway, a markdown body, and optionally a mermaid diagram and a feedback control (decision, notes, or approval). After the call succeeds, tell the user the returned file paths and summarize the plan in at most three sentences. Do not restate the whole plan in chat.
 
-Write section bodies for the decision-maker first. Put detailed code, schemas, command lines, and low-level implementation notes in a final section titled "Addendum".
+Open with the big picture, then go deep. The first section after the header should tell the reader what changes in the codebase and what the user will notice, before any technical detail. Every section body leads with impact (what this changes, who feels it, what stays the same) and only then moves into mechanics. Detailed code, schemas, command lines, and low-level implementation notes go in a final section titled "Addendum".
+
+Write like a colleague talking to another engineer, not like documentation. Contractions are fine. Plain words beat formal ones. Short sentences; if one needs two commas to survive, split it. Keep technical terms technical: do not dumb a concept down, just drop the ceremony around it.
+
+Diagrams are rendered by mermaid. Write the diagram field as a mermaid diagram definition, most often a flowchart: "flowchart TD\n  A[CLI flag] --> B{middleware on?}\n  B -- yes --> C[10% of traffic]\n  B -- no --> D[old path]". Sequence diagrams and state diagrams also work. Keep diagrams to at most ~10 nodes.
 
 The prose must be free of mechanical AI-writing tells or the call is rejected: no puffery (comprehensive, leverage, delve, streamline, additionally, crucial, pivotal, testament, showcase, vibrant, foster, utilize, facilitate, numerous), no "not just X but Y" shapes, no chatbot openers ("Great question", "Of course!"), no hollow phrases ("in today's fast-paced world", "the future looks bright"), no curly quotes, no em dashes (use periods or commas), no filler ("in order to", "due to the fact that", "it is important to note"). If the call is rejected with a list of findings, rewrite the flagged lines and call again. Technical detail is never banned. Only the tells above are.`;
 
@@ -292,9 +296,15 @@ const planParameters = Type.Object({
       title: Type.String({ description: "Section heading, sentence case." }),
       takeaway: Type.String({ description: "One-sentence takeaway shown under the heading." }),
       body: Type.String({
-        description: "Section body, markdown. Decision-maker language first; technical detail goes in a final Addendum section.",
+        description:
+          "Section body, markdown. Lead with impact: what changes in the codebase and what the user notices, before mechanics. Technical detail goes in a final Addendum section.",
       }),
-      diagram: Type.Optional(Type.String({ description: "Optional diagram description, markdown." })),
+      diagram: Type.Optional(
+        Type.String({
+          description:
+            "Mermaid diagram definition, e.g. flowchart TD with A[box] --> B arrows. Rendered as a real diagram on the page. Keep it under ~10 nodes.",
+        }),
+      ),
       feedback: Type.Optional(
         Type.Object({
           kind: StringEnum(["decision", "notes", "approval"], {

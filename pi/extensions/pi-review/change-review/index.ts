@@ -25,7 +25,7 @@ import { findCommitInvocations, stripNoReviewFlag } from "./git.ts";
 
 const DIFF_LINES_PER_FILE = 300;
 const GATE_REASON =
-  "Commit gated: call review_changes with the proposed commit message and a per-file explanation of the staged changes, then wait for the user's approval. To skip the review for this one commit, add --no-review to the git commit command.";
+  "Commit gated: call review_changes with the proposed commit message and a per-file explanation of the staged changes, then wait for the user's approval. Explanations lead with the functional impact (what changes for the codebase and the user) before implementation detail. To skip the review for this one commit, add --no-review to the git commit command.";
 
 const ALL_FLAG_REASON =
   "Commit gated: git commit -a/--all cannot be reviewed faithfully against the staged diff. Stage the files explicitly with git add, then call review_changes.";
@@ -131,7 +131,10 @@ const reviewParameters = Type.Object({
   files: Type.Array(
     Type.Object({
       path: Type.String({ description: "Repository-relative staged file path, exactly as git reports it." }),
-      explanation: Type.String({ description: "What this file's staged changes do and why, in plain language." }),
+      explanation: Type.String({
+        description:
+          "What this file's staged changes do and why, in plain language. Lead with the functional impact: what changes in the codebase and what a user or maintainer notices. Then the implementation detail.",
+      }),
     }),
     { minItems: 1 },
   ),
