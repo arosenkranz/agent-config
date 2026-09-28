@@ -14,6 +14,31 @@ Analyze usage patterns across all installed skills and agents, then interactivel
 - Check `~/.claude/optimize.local.md` for `last_run` date — if 30+ days ago, suggest running
 - Run after major skill/agent additions to establish a new baseline
 
+## Phase 0: Locate the Repo
+
+The agent-config checkout lives in different places per machine. Resolve it once, remember the concrete path, and substitute it for `$AGENT_CONFIG` in every command below:
+
+```bash
+# 1. Directory-source marketplace: the path is in ~/.claude/settings.json
+AGENT_CONFIG=$(jq -r '.extraKnownMarketplaces["arosenkranz-claude-plugins"].source.path // empty' ~/.claude/settings.json 2>/dev/null)
+
+# 2. Known checkout locations (personal machine: ~/Code; work machine: ~/workspace)
+if [ -z "$AGENT_CONFIG" ] || [ ! -d "$AGENT_CONFIG" ]; then
+  for c in ~/Code/agent-config ~/workspace/agent-config; do
+    [ -d "$c/.git" ] && AGENT_CONFIG="$c" && break
+  done
+fi
+
+# 3. GitHub-marketplace cache fallback
+if [ -z "$AGENT_CONFIG" ] || [ ! -d "$AGENT_CONFIG" ]; then
+  AGENT_CONFIG=~/.claude/plugins/marketplaces/arosenkranz-claude-plugins
+fi
+
+echo "AGENT_CONFIG=$AGENT_CONFIG"
+```
+
+If nothing resolves, ask the user where the checkout lives before continuing.
+
 ## Phase 1: Data Collection
 
 Run the analysis script to gather usage data:
@@ -36,7 +61,7 @@ ls -la ~/.claude/skills/
 **List all installed agents:**
 ```bash
 ls ~/.claude/agents/ 2>/dev/null
-ls ~/.claude/plugins/marketplaces/arosenkranz-claude-plugins/plugins/goldeneye-agents/agents/
+ls "$AGENT_CONFIG/plugins/goldeneye-agents/agents/"
 ```
 
 **For each skill**, read its `SKILL.md` frontmatter to extract `name` and `description`:
@@ -109,7 +134,7 @@ Which ones do you want to archive? (reply with names, 'all', or 'none')"
 For approved archives:
 1. **Repo (plugin) skills** — move the skill directory within the repo, then commit:
    ```bash
-   cd ~/Code/agent-config
+   cd "$AGENT_CONFIG"
    mkdir -p plugins/workflow-skills/skills/archived
    mv plugins/workflow-skills/skills/<name>/ plugins/workflow-skills/skills/archived/
    ```
@@ -157,7 +182,7 @@ total_sessions_analyzed: <count from script>
 If any files were modified, run:
 
 ```bash
-cd ~/Code/agent-config && git add -A && git commit -m "chore: optimize skills and agents based on usage analysis"
+cd "$AGENT_CONFIG" && git add -A && git commit -m "chore: optimize skills and agents based on usage analysis"
 ```
 
 ## Notes
