@@ -36,6 +36,8 @@ Open with the big picture, then go deep. The first section after the header shou
 
 Write like a colleague talking to another engineer, not like documentation. Contractions are fine. Plain words beat formal ones. Short sentences; if one needs two commas to survive, split it. Keep technical terms technical: do not dumb a concept down, just drop the ceremony around it.
 
+Decision and approval labels are plain questions the user answers, like How fast do we roll out? or Ship the DB migration before the flag? Never section ids or noun phrases like Approach. The banner and the rail present these labels directly, so a vague label is a vague question on the page.
+
 Diagrams are rendered by mermaid. Write the diagram field as a mermaid diagram definition, most often a flowchart: "flowchart TD\n  A[CLI flag] --> B{middleware on?}\n  B -- yes --> C[10% of traffic]\n  B -- no --> D[old path]". Sequence diagrams and state diagrams also work. Keep diagrams to at most ~10 nodes.
 
 The prose must be free of mechanical AI-writing tells or the call is rejected: no puffery (comprehensive, leverage, delve, streamline, additionally, crucial, pivotal, testament, showcase, vibrant, foster, utilize, facilitate, numerous), no "not just X but Y" shapes, no chatbot openers ("Great question", "Of course!"), no hollow phrases ("in today's fast-paced world", "the future looks bright"), no curly quotes, no em dashes (use periods or commas), no filler ("in order to", "due to the fact that", "it is important to note"). If the call is rejected with a list of findings, rewrite the flagged lines and call again. Technical detail is never banned. Only the tells above are.`;
@@ -310,7 +312,12 @@ const planParameters = Type.Object({
           kind: StringEnum(["decision", "notes", "approval"], {
             description: "Feedback control for this section: decision (radio options), notes (text box), or approval (checkbox).",
           }),
-          label: Type.Optional(Type.String({ description: "Control label." })),
+          label: Type.Optional(
+            Type.String({
+              description:
+                "Control label: a plain question the user answers, e.g. How fast do we roll out? Never a section id or a noun phrase like Approach.",
+            }),
+          ),
           options: Type.Optional(Type.Array(Type.String(), { description: "Radio options, decision kind only." })),
         }),
       ),

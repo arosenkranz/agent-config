@@ -124,12 +124,16 @@ describe("renderPlanPage", () => {
     expect(html).toContain('<span class="sec-num">01</span>');
     expect(html).toContain('<span class="sec-num">05</span>');
     expect(html).toMatch(/<section id="addendum" class="addendum"/);
-    expect(html).toContain('class="toc"');
-    expect(html).toContain('Contents (5 sections)');
+    expect(html).toContain('class="rail-box rail-contents"');
+    expect(html).toContain('href="#addendum"');
   });
 
-  it("skips the TOC for short plans", () => {
-    expect(renderPlanPage(demoPresentation)).not.toContain('class="toc"');
+  it("lists contents in the rail for every plan, with no TOC block in the column", () => {
+    const html = renderPlanPage(demoPresentation);
+    expect(html).toContain('class="rail-box rail-contents"');
+    expect(html).not.toContain('<details class="toc">');
+    expect(html).toContain('href="#summary"');
+    expect(html).toContain('href="#phase-2"');
   });
 
   it("styles radio options as chips with a visible checked state", () => {
@@ -235,6 +239,49 @@ describe("renderPlanPage diagrams", () => {
     const html = renderPlanPage(hostile);
     expect(html).toContain("&lt;/pre&gt;&lt;script&gt;");
     expect(html).not.toContain("<script>alert(1)");
+  });
+});
+
+describe("renderPlanPage rail and banner", () => {
+  it("renders a decision banner and rail mirroring the section controls", () => {
+    const html = renderPlanPage(demoPresentation);
+    expect(html).toContain('id="decision-banner"');
+    expect(html).toContain("2 decisions before you start");
+    expect(html).toContain('id="banner-dismiss"');
+    // shared radio name across section, banner, and rail: 3 surfaces x 3 options
+    expect((html.match(/name="fb-decision-summary"/g) ?? []).length).toBe(9);
+    expect(html).toContain('class="rail"');
+    expect(html).toContain('id="decision-progress"');
+    expect(html).toContain("0 of 2 decided");
+    // the approval control is mirrored in the banner and rail, once each, plus the section copy
+    expect((html.match(/data-feedback="approval"/g) ?? []).length).toBe(3);
+  });
+
+  it("keeps mirrors invisible to the copy-back builder", () => {
+    const html = renderPlanPage(demoPresentation);
+    const rail = html.match(/<aside class="rail"[\s\S]*?<\/aside>/)?.[0] ?? "";
+    const banner = html.match(/<section class="banner"[\s\S]*?<\/section>/)?.[0] ?? "";
+    expect(rail).not.toBe("");
+    expect(banner).not.toBe("");
+    expect(rail).not.toContain("data-section-title");
+    expect(banner).not.toContain("data-section-title");
+    // buildFeedback still walks sections only, so mirrors cannot duplicate output
+    expect(html).toContain('document.querySelectorAll("[data-section-title]")');
+  });
+
+  it("carries sync, progress, and banner-dismiss behavior in the client script", () => {
+    const html = renderPlanPage(demoPresentation);
+    expect(html).toContain("mirrorSync");
+    expect(html).toContain("updateProgress");
+    expect(html).toContain("banner.setAttribute");
+    // radios sync natively through shared names, never through mirrorSync
+    expect(html).toContain("t.type === \"radio\"");
+  });
+
+  it("hides the rail on narrow screens and keeps the banner as the decision surface", () => {
+    const html = renderPlanPage(demoPresentation);
+    expect(html).toContain("@media (max-width: 1100px)");
+    expect(html).toContain(".rail { display: none; }");
   });
 });
 

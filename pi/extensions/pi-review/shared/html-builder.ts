@@ -256,18 +256,41 @@ function pageCss(): string {
   .skip { position: absolute; left: -9999px; }
   .skip:focus { left: 8px; top: 8px; background: var(--accent); color: #101216; padding: 6px 12px; border-radius: 6px; z-index: 10; }
   .wrap { max-width: 920px; margin: 0 auto; padding: 24px 20px 90px; }
+  .wrap-plan { max-width: 1150px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 0 36px; align-items: start; }
+  .wrap-plan > header.page, .wrap-plan > .bar, .wrap-plan > .response-area { grid-column: 1 / -1; }
   header.page { border-bottom: 1px solid var(--border); padding: 30px 0 22px; margin-bottom: 30px; position: relative; }
   header.page::before { content: ""; position: absolute; top: 0; left: -20px; right: -20px; height: 4px; background: linear-gradient(90deg, var(--accent), #bb9af7 55%, var(--accent2)); border-radius: 4px; }
   h1 { font-size: 32px; margin: 0 0 8px; line-height: 1.25; letter-spacing: -0.01em; }
   .subtitle { color: var(--muted); font-size: 18px; margin: 0 0 10px; }
   .meta { color: var(--muted); font-size: 14px; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px 16px; }
-  .toc { margin-top: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); }
-  .toc summary { cursor: pointer; padding: 10px 16px; font-size: 15px; font-weight: 600; color: var(--muted); }
-  .toc summary:hover { color: var(--text); }
-  .toc ol { margin: 0; padding: 4px 16px 14px 40px; columns: 2; column-gap: 32px; }
-  .toc li { margin: 4px 0; break-inside: avoid; }
-  .toc a { color: var(--accent); text-decoration: none; font-size: 15px; }
-  .toc a:hover { text-decoration: underline; }
+  .rail { position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  .rail-box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .rail-box + .rail-box { margin-top: 16px; }
+  .rail-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 10px; }
+  .rail-progress { font-size: 14px; color: var(--accent); margin: 0 0 12px; }
+  .rail .mirror { margin: 0 0 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
+  .rail .mirror:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .rail .mirror-q { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+  .rail-contents ol { margin: 0; padding: 0 0 0 18px; }
+  .rail-contents li { font-size: 14px; margin: 4px 0; }
+  .rail-contents a { color: var(--accent); text-decoration: none; }
+  .rail-contents a:hover { text-decoration: underline; }
+  .banner { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 16px 18px; margin: 0 0 24px; }
+  .banner[hidden] { display: none; }
+  .banner-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+  .banner-title { font-weight: 700; font-size: 17px; }
+  .banner-dismiss { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 14px; padding: 0; text-decoration: underline; }
+  .banner-dismiss:hover { color: var(--text); }
+  .banner-list { margin: 0; padding: 0; list-style: none; }
+  .banner .mirror { margin: 10px 0; }
+  .banner .mirror-q { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .mirror-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mirror-opt { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; cursor: pointer; color: var(--text); background: var(--panel2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; transition: border-color .15s, background .15s; }
+  .mirror-opt:hover { border-color: var(--accent); }
+  .mirror-opt:has(input:checked) { border-color: var(--accent); background: rgba(122, 162, 247, 0.14); font-weight: 600; }
+  .mirror-opt input { accent-color: var(--accent); width: 13px; height: 13px; margin: 0; }
+  .mirror-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14.5px; }
+  .mirror-check input { accent-color: var(--accent); width: 16px; height: 16px; }
   section { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 24px 26px; margin: 22px 0; position: relative; }
   .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
   .sec-num { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 15px; font-weight: 700; color: var(--accent); background: rgba(122, 162, 247, 0.12); border: 1px solid rgba(122, 162, 247, 0.35); border-radius: 8px; padding: 3px 9px; flex: none; }
@@ -326,12 +349,13 @@ function pageCss(): string {
   pre.diff .hunk { color: var(--accent); }
   pre.diff .truncated { color: var(--warn); font-style: italic; }
   .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  @media (max-width: 1100px) { .wrap-plan { display: block; } .rail { display: none; } }
   @media (max-width: 640px) {
-    h1 { font-size: 26px; } section { padding: 18px 16px; } .toc ol { columns: 1; }
+    h1 { font-size: 26px; } section { padding: 18px 16px; } .banner { padding: 12px 14px; } .mirror-opt { font-size: 12.5px; }
     .sec-head { flex-direction: column; gap: 6px; }
   }
   @media print {
-    .bar, .skip { display: none; }
+    .bar, .skip, .rail { display: none; }
     body { background: #fff; color: #111; }
     section { break-inside: avoid; border-left-color: #999; }
     .takeaway { background: #f2f2f2; }
@@ -436,11 +460,51 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
     return lines.join("\\n");
   }
   var responseEl = document.getElementById("copyable-response");
+  function updateProgress() {
+    var progress = document.getElementById("decision-progress");
+    if (!progress) return;
+    var sections = document.querySelectorAll("[data-section-title]");
+    var total = 0;
+    var decided = 0;
+    for (var i = 0; i < sections.length; i++) {
+      var el = sections[i];
+      var radio = el.querySelector('input[type="radio"]');
+      var check = el.querySelector('input[type="checkbox"]');
+      if (!radio && !check) continue;
+      total++;
+      if (el.querySelector('input[type="radio"]:checked') || (check && check.checked)) decided++;
+    }
+    progress.textContent = decided + " of " + total + " decided";
+  }
   function refresh() {
     if (responseEl) responseEl.textContent = buildFeedback();
+    updateProgress();
+  }
+  function mirrorSync(event) {
+    var t = event.target;
+    if (!t || !t.getAttribute) return;
+    var sid = t.getAttribute("data-section-id");
+    var kind = t.getAttribute("data-feedback");
+    if (!sid || !kind || t.type === "radio") return;
+    var peers = document.querySelectorAll('[data-feedback="' + kind + '"][data-section-id="' + sid + '"]');
+    for (var j = 0; j < peers.length; j++) {
+      if (peers[j] === t) continue;
+      if (t.type === "checkbox") peers[j].checked = t.checked;
+      else peers[j].value = t.value;
+    }
   }
   document.addEventListener("input", refresh);
   document.addEventListener("change", refresh);
+  document.addEventListener("input", mirrorSync);
+  document.addEventListener("change", mirrorSync);
+  var bannerDismiss = document.getElementById("banner-dismiss");
+  if (bannerDismiss) {
+    bannerDismiss.addEventListener("click", function () {
+      var banner = document.getElementById("decision-banner");
+      if (banner) banner.setAttribute("hidden", "");
+      setStatus("banner dismissed — decide in the sections as you read");
+    });
+  }
   refresh();
   var status = document.getElementById("copy-status");
   function setStatus(text) {
@@ -519,7 +583,7 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
 // Plan page
 // ---------------------------------------------------------------------------
 
-function shell(title: string, body: string, script: string, mermaidSource?: string): string {
+function shell(title: string, body: string, script: string, mermaidSource?: string, wrapClass = "wrap"): string {
   const mermaidScripts = mermaidSource
     ? `<script>${mermaidSource}</script>
 <script>
@@ -544,7 +608,7 @@ function shell(title: string, body: string, script: string, mermaidSource?: stri
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<div class="wrap">
+<div class="${wrapClass}">
 ${body}
 </div>
 ${mermaidScripts}<script>${script}</script>
@@ -581,18 +645,63 @@ function sectionHeadHtml(section: PresentationSection, number: number): string {
 <p class="takeaway">${escapeHtml(section.takeaway)}</p>`;
 }
 
-/** Collapsible table of contents, shown once the plan has several sections. */
-function tocHtml(sections: PresentationSection[]): string {
-  if (sections.length < 4) return "";
-  const items = sections
-    .map((section) => `<li><a href="#${escapeHtml(section.id)}">${escapeHtml(section.title)}</a></li>`)
-    .join("");
-  return `<details class="toc">
-<summary>Contents (${sections.length} sections)</summary>
-<ol>${items}</ol>
-</details>`;
+/** Compact mirror of a section's decision or approval control, for the banner and rail. */
+function controlMirrorHtml(section: PresentationSection): string {
+  const feedback = section.feedback;
+  if (!feedback || feedback.kind === "notes") return "";
+  const sid = escapeHtml(section.id);
+  const question = escapeHtml(feedback.label ?? "Decision");
+  if (feedback.kind === "decision") {
+    const options = (feedback.options ?? [])
+      .map((option) => {
+        const value = escapeHtml(option);
+        return `<label class="mirror-opt"><input type="radio" name="fb-decision-${sid}" value="${value}"><span>${value}</span></label>`;
+      })
+      .join("");
+    return `<div class="mirror"><div class="mirror-q">${question}</div><div class="mirror-opts">${options}</div></div>`;
+  }
+  return `<div class="mirror"><label class="mirror-check"><input type="checkbox" data-feedback="approval" data-section-id="${sid}"><span>${question}</span></label></div>`;
 }
 
+/** Decision banner: every open decision as a plain question with inline controls. */
+function decisionBannerHtml(sections: PresentationSection[]): string {
+  const decisions = sections.map(controlMirrorHtml).filter((mirror) => mirror !== "");
+  if (decisions.length === 0) return "";
+  const title =
+    decisions.length === 1 ? "1 decision before you start" : `${decisions.length} decisions before you start`;
+  return `<section class="banner" id="decision-banner" aria-label="Open decisions">
+<div class="banner-head">
+<span class="banner-title">${title}</span>
+<button type="button" class="banner-dismiss" id="banner-dismiss">decide as you read instead</button>
+</div>
+<div class="banner-list">
+${decisions.join("\n")}
+</div>
+</section>`;
+}
+
+/** Sticky rail: decision mirrors, live progress, and contents links. */
+function decisionRailHtml(sections: PresentationSection[]): string {
+  const decisions = sections.map(controlMirrorHtml).filter((mirror) => mirror !== "");
+  const decisionBox =
+    decisions.length > 0
+      ? `<div class="rail-box">
+<div class="rail-title">Decisions</div>
+<p class="rail-progress" id="decision-progress" aria-live="polite">0 of ${decisions.length} decided</p>
+${decisions.join("\n")}
+</div>`
+      : "";
+  const contents = `<div class="rail-box rail-contents">
+<div class="rail-title">Contents</div>
+<ol>${sections
+    .map((section) => `<li><a href="#${escapeHtml(section.id)}">${escapeHtml(section.title)}</a></li>`)
+    .join("")}</ol>
+</div>`;
+  return `<aside class="rail" aria-label="Decisions and contents">
+${decisionBox}
+${contents}
+</aside>`;
+}
 
 /** Render the full self-contained plan presentation page. */
 export function renderPlanPage(presentation: Presentation, options: PlanPageOptions = {}): string {
@@ -611,7 +720,8 @@ ${feedbackControlHtml(section)}
     .join("\n");
 
   const head = presentation.subtitle ? `<p class="subtitle">${escapeHtml(presentation.subtitle)}</p>` : "";
-  const toc = tocHtml(presentation.sections);
+  const banner = decisionBannerHtml(presentation.sections);
+  const rail = decisionRailHtml(presentation.sections);
 
   const sendButton = options.sendToPiUrl
     ? `<button type="button" class="btn btn-secondary" id="send-feedback">Send to Pi</button>`
@@ -621,9 +731,9 @@ ${feedbackControlHtml(section)}
 <h1>${escapeHtml(presentation.title)}</h1>
 ${head}
 <p class="meta"><span>Prepared ${escapeHtml(presentation.generatedAt)}</span><span>pi-review</span></p>
-${toc}
 </header>
 <main id="main">
+${banner}
 ${sectionsHtml}
 <section class="overall" data-section-id="overall" data-section-title="Overall response">
 <h2>Overall response</h2>
@@ -631,6 +741,7 @@ ${sectionsHtml}
 <textarea id="overall-response" placeholder="Overall comments, questions, or a final verdict"></textarea>
 </section>
 </main>
+${rail}
 <div class="bar">
 <div class="inner">
 <button type="button" class="btn" id="copy-feedback">Copy feedback for Pi</button>
@@ -652,6 +763,7 @@ ${sendButton}
     body,
     feedbackScript(presentation.title, presentation.generatedAt, options.sendToPiUrl),
     mermaidToEmbed,
+    "wrap wrap-plan",
   );
 }
 
