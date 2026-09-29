@@ -204,6 +204,10 @@ export function registerChangeReview(pi: ExtensionAPI): void {
     } else {
       deliverUserMessage(pi, ctx, `Commit rejected from the review page. Your feedback:\n\n${markdown}`);
     }
+    // A decision concludes this review: close the endpoint so late clicks on
+    // an old review tab cannot deliver ghost messages into the session.
+    activeEndpoint?.close();
+    activeEndpoint = undefined;
     if (ctx.hasUI) {
       ctx.ui.notify("Feedback received from the commit review page", "info");
     }
