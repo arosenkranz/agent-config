@@ -26,16 +26,40 @@ export interface ParsedSectionFeedback {
   notes?: string;
 }
 
+/** One inline comment from a review page, anchored to a diff line or a plan paragraph. */
+export interface ParsedComment {
+  /** Diff anchors read like `user.ts:42`; plan anchors like `rollout:p2`. */
+  anchor: string;
+  text: string;
+}
+
 export interface ParsedFeedback {
   title?: string;
   generatedAt?: string;
   sections: ParsedSectionFeedback[];
+  comments: ParsedComment[];
   overall?: string;
 }
 
 const SECTION_HEADER = /^## ([a-zA-Z0-9][a-zA-Z0-9-]*)(?: — (.*))?$/;
 const OVERALL_HEADER = /^## Overall response$/;
+const COMMENTS_HEADER = /^## Comments$/;
+const COMMENT_LINE = /^- (.+?) — (.*)$/;
 const KEY_LINE = /^(Decision|Approved|Notes): ?(.*)$/;
+
+/** True when the markdown carries any content beyond the page header lines. */
+export function hasFeedbackContent(markdown: string): boolean {
+  const meaningful = markdown
+    .split("\n")
+    .filter(
+      (line) =>
+        line !== "" &&
+        !line.startsWith("# Feedback on: ") &&
+        !line.startsWith("Generated: "),
+    )
+    .join("");
+  return meaningful.length > 0;
+}
 
 /**
  * Parse the stable feedback format:
@@ -48,18 +72,22 @@ const KEY_LINE = /^(Decision|Approved|Notes): ?(.*)$/;
  *   Approved: yes|no
  *   Notes: <free text, possibly multiline>
  *
+ *   ## Comments
+ *   - <anchor> — <inline comment text>
+ *
  *   ## Overall response
  *   <free text>
  *
  * Tolerant by design: unknown keys are ignored and missing pieces stay unset.
  */
 export function parseFeedback(markdown: string): ParsedFeedback {
-  const result: ParsedFeedback = { sections: [] };
+  const result: ParsedFeedback = { sections: [], comments: [] };
   const lines = markdown.split("\n");
 
   let current: ParsedSectionFeedback | undefined;
   let overall: string[] | undefined;
   let notes: string[] | undefined;
+  let inComments = false;
 
   for (const line of lines) {
     if (line.startsWith("# Feedback on: ")) {
@@ -73,7 +101,15 @@ export function parseFeedback(markdown: string): ParsedFeedback {
     if (OVERALL_HEADER.test(line)) {
       current = undefined;
       notes = undefined;
+      inComments = false;
       overall = [];
+      continue;
+    }
+    if (COMMENTS_HEADER.test(line)) {
+      current = undefined;
+      notes = undefined;
+      overall = undefined;
+      inComments = true;
       continue;
     }
     const sectionMatch = line.match(SECTION_HEADER);
@@ -82,6 +118,12 @@ export function parseFeedback(markdown: string): ParsedFeedback {
       result.sections.push(current);
       overall = undefined;
       notes = undefined;
+      inComments = false;
+      continue;
+    }
+    const commentMatch = line.match(COMMENT_LINE);
+    if (commentMatch && inComments) {
+      result.comments.push({ anchor: commentMatch[1], text: commentMatch[2] });
       continue;
     }
     if (overall !== undefined) {
@@ -200,8 +242,16 @@ export function startFeedbackEndpoint(
     req.on("error", () => {});
     req.on("end", async () => {
       if (aborted) return;
+      const body = Buffer.concat(chunks).toString("utf8");
+      if (!hasFeedbackContent(body)) {
+        // Ghost clicks send the empty header skeleton; refuse and stay open
+        // so the user can still send real feedback from the same page.
+        res.writeHead(422, { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" });
+        res.end("empty feedback rejected — answer a decision or leave a comment first");
+        return;
+      }
       try {
-        await onFeedback(Buffer.concat(chunks).toString("utf8"));
+        await onFeedback(body);
         res.writeHead(200, { "Content-Type": "text/plain", "Access-Control-Allow-Origin": "*" });
         res.end("delivered");
       } catch (error) {

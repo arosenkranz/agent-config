@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   FEEDBACK_ENDPOINT_TIMEOUT_MS,
+  hasFeedbackContent,
   parseFeedback,
   startFeedbackEndpoint,
   type FeedbackEndpoint,
@@ -57,7 +58,48 @@ describe("parseFeedback", () => {
   });
 
   it("returns empty sections for unrelated text", () => {
-    expect(parseFeedback("just some text")).toEqual({ sections: [] });
+    expect(parseFeedback("just some text")).toEqual({ sections: [], comments: [] });
+  });
+
+  it("parses a comments block with diff and paragraph anchors", () => {
+    const md = [
+      "# Feedback on: Commit review",
+      "Generated: 2026-09-29T00:00:00Z",
+      "",
+      "## commit-decision — Commit decision",
+      "Decision: approve",
+      "",
+      "## Comments",
+      "- user.ts:42 — this retry misses the 429 case",
+      "- rollout (para 2) — staging should be 5%",
+      "",
+      "## Overall response",
+      "Ship it.",
+    ].join("\n");
+    const parsed = parseFeedback(md);
+    expect(parsed.comments).toEqual([
+      { anchor: "user.ts:42", text: "this retry misses the 429 case" },
+      { anchor: "rollout (para 2)", text: "staging should be 5%" },
+    ]);
+    expect(parsed.sections).toEqual([{ id: "commit-decision", title: "Commit decision", decision: "approve" }]);
+    expect(parsed.overall).toBe("Ship it.");
+  });
+
+  it("ignores comment lines outside a comments block", () => {
+    const parsed = parseFeedback("## risks\n- not a comment: stray line");
+    expect(parsed.comments).toEqual([]);
+    expect(parsed.sections[0].id).toBe("risks");
+  });
+});
+
+describe("hasFeedbackContent", () => {
+  it("rejects the empty header skeleton", () => {
+    expect(hasFeedbackContent("# Feedback on: t\nGenerated: now\n\n")).toBe(false);
+  });
+
+  it("accepts anything beyond the header lines", () => {
+    expect(hasFeedbackContent("# Feedback on: t\nGenerated: now\n\n## s\nDecision: yes")).toBe(true);
+    expect(hasFeedbackContent("# Feedback on: t\n\n## Comments\n- a:1 — note")).toBe(true);
   });
 });
 
@@ -79,14 +121,36 @@ describe("startFeedbackEndpoint", () => {
     const res = await fetch(endpoint.url, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
-      body: "# Feedback on: t",
+      body: "# Feedback on: t\nGenerated: now\n\n## s\nDecision: yes",
     });
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("delivered");
-    expect(onFeedback).toHaveBeenCalledWith("# Feedback on: t");
+    expect(onFeedback).toHaveBeenCalledWith("# Feedback on: t\nGenerated: now\n\n## s\nDecision: yes");
 
     // Endpoint closed after first delivery: a second POST fails.
     await expect(fetch(endpoint.url, { method: "POST", body: "again" })).rejects.toThrow();
+  });
+
+  it("rejects empty feedback and stays open for a real send", async () => {
+    const onFeedback = vi.fn();
+    const endpoint = await startFeedbackEndpoint(onFeedback);
+    endpoints.push(endpoint);
+
+    const empty = await fetch(endpoint.url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: "# Feedback on: t\nGenerated: now\n\n",
+    });
+    expect(empty.status).toBe(422);
+    expect(onFeedback).not.toHaveBeenCalled();
+
+    // The endpoint survived the ghost click: meaningful feedback still delivers.
+    const real = await fetch(endpoint.url, {
+      method: "POST",
+      body: "# Feedback on: t\nGenerated: now\n\n## s\nDecision: yes",
+    });
+    expect(real.status).toBe(200);
+    expect(onFeedback).toHaveBeenCalledTimes(1);
   });
 
   it("sends CORS headers for file:// pages", async () => {

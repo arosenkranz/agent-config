@@ -106,11 +106,27 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
   #copyable-response { white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; margin: 0; }
   .overall textarea { min-height: 90px; }
   .overall { border-left-color: var(--accent2); }
-  pre.diff { font-size: 12px; line-height: 1.45; }
-  pre.diff .add { color: var(--accent2); }
-  pre.diff .del { color: var(--danger); }
-  pre.diff .hunk { color: var(--accent); }
-  pre.diff .truncated { color: var(--warn); font-style: italic; }
+  pre.diff { font-size: 12px; line-height: 1.5; padding: 10px 8px; }
+  .diff-line { display: flex; align-items: baseline; white-space: pre-wrap; position: relative; padding-right: 30px; }
+  .diff-line .diff-ln { flex: none; width: 3.5em; text-align: right; padding-right: 12px; color: var(--muted); user-select: none; font-size: 11px; }
+  .diff-line .diff-code { flex: 1; overflow-wrap: anywhere; }
+  .diff-line.add .diff-code { color: var(--accent2); }
+  .diff-line.del .diff-code { color: var(--danger); }
+  .diff-line.hunk .diff-code { color: var(--accent); }
+  .diff-line.hunk { margin-top: 6px; }
+  .diff-line.truncated { color: var(--warn); font-style: italic; white-space: normal; }
+  .anchored { position: relative; }
+  .cmt-btn { position: absolute; left: -24px; top: 2px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--accent); background: var(--panel2); color: var(--accent); font-size: 13px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .12s; padding: 0; }
+  .anchored:hover > .cmt-btn, .anchored:focus-within > .cmt-btn, .cmt-btn:focus { opacity: 1; }
+  .diff-line .cmt-btn { left: auto; right: 6px; top: 1px; }
+  .cmt-form { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+  .cmt-form textarea { min-height: 48px; }
+  .cmt-actions { display: flex; gap: 8px; }
+  .cmt-actions .btn { padding: 6px 14px; font-size: 14px; }
+  .cmt-note { display: flex; align-items: baseline; gap: 10px; margin: 6px 0; padding: 8px 12px; background: rgba(224, 175, 104, 0.08); border-left: 3px solid var(--warn); border-radius: 0 8px 8px 0; font-size: 14.5px; }
+  .cmt-note-text { flex: 1; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cmt-rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; }
+  .cmt-rm:hover { color: var(--danger); }
   .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
   @media (max-width: 1100px) { .wrap-plan { display: block; } .rail { display: none; } }
   @media (max-width: 640px) {
@@ -153,8 +169,8 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
 <p class="takeaway">Ship the widget in two phases with a fallback switch.</p>
 
 <h4>What changes</h4>
-<ul><li>New <code>widget</code> module behind a flag</li><li>Rollout to 10% of traffic first</li></ul>
-<p>See <a href="https://example.com/spec">the spec</a> for details.</p>
+<ul><li data-anchor="summary:p1">New <code>widget</code> module behind a flag</li><li data-anchor="summary:p2">Rollout to 10% of traffic first</li></ul>
+<p data-anchor="summary:p3">See <a href="https://example.com/spec">the spec</a> for details.</p>
 <div class="feedback">
 <fieldset data-feedback="decision" data-section-id="summary">
 <legend>Approve this direction?</legend>
@@ -176,7 +192,7 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
 <p class="takeaway">Full rollout after one week of stable metrics.</p>
 <div class="diagram"><div class="diagram-label">Diagram</div><pre class="mermaid">flowchart LR
   A[flag off] --&gt; B[10% of traffic] --&gt; C[100%]</pre></div>
-<div class="table-wrap"><table><thead><tr><th>Step</th><th>Owner</th></tr></thead><tbody><tr><td>Flip flag</td><td>Alex</td></tr><tr><td>Watch dashboards</td><td>On-call</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Step</th><th>Owner</th></tr></thead><tbody><tr data-anchor="phase-2:p1"><td>Flip flag</td><td>Alex</td></tr><tr data-anchor="phase-2:p2"><td>Watch dashboards</td><td>On-call</td></tr></tbody></table></div>
 <div class="feedback">
 <div class="fb-check">
 <label><input type="checkbox" data-feedback="approval" data-section-id="phase-2"> <span>Approve this phase</span></label>
@@ -231,6 +247,16 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
 <script>
 (function () {
   var META = {"title":"Demo plan: ship the widget","generatedAt":"2026-09-09T09:57:00.000-05:00"};
+  var comments = [];
+  var commentSeq = 0;
+  function formatAnchor(anchor) {
+    var m = anchor.match(/^(.+):p(\\d+)$/);
+    if (m) return m[1] + " (para " + m[2] + ")";
+    return anchor;
+  }
+  function hasMeaningfulFeedback(text) {
+    return text.split("\\n").slice(3).join("\\n").trim().length > 0;
+  }
   function buildFeedback() {
     var lines = [];
     lines.push("# Feedback on: " + META.title);
@@ -251,6 +277,13 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
       if (decision) lines.push("Decision: " + decision.value);
       if (approval) lines.push("Approved: " + (approval.checked ? "yes" : "no"));
       if (notes) lines.push("Notes: " + notes);
+      lines.push("");
+    }
+    if (comments.length > 0) {
+      lines.push("## Comments");
+      for (var c = 0; c < comments.length; c++) {
+        lines.push("- " + formatAnchor(comments[c].anchor) + " — " + comments[c].text);
+      }
       lines.push("");
     }
     var overall = document.getElementById("overall-response");
@@ -307,6 +340,123 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
       setStatus("banner dismissed — decide in the sections as you read");
     });
   }
+  function anchorSelector(anchor) {
+    return '[data-anchor="' + anchor.replace(/"/g, '\\\\"') + '"]';
+  }
+  function attachCommentAffordances() {
+    var targets = document.querySelectorAll("[data-anchor]");
+    for (var i = 0; i < targets.length; i++) {
+      var el = targets[i];
+      if (el.classList.contains("anchored")) continue;
+      el.classList.add("anchored");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cmt-btn";
+      btn.setAttribute("aria-label", "Comment here");
+      btn.textContent = "+";
+      btn.setAttribute("data-anchor", el.getAttribute("data-anchor"));
+      if (el.tagName === "TR") {
+        var cell = el.querySelector("td, th");
+        if (cell) {
+          cell.classList.add("anchored");
+          cell.appendChild(btn);
+        } else {
+          el.appendChild(btn);
+        }
+      } else {
+        el.appendChild(btn);
+      }
+    }
+  }
+  function closeOpenForm() {
+    var open = document.querySelector(".cmt-form");
+    if (open && open.parentNode) open.parentNode.removeChild(open);
+  }
+  function openCommentForm(anchor) {
+    closeOpenForm();
+    var host = document.querySelector(anchorSelector(anchor));
+    if (!host) return;
+    var form = document.createElement("div");
+    form.className = "cmt-form";
+    form.setAttribute("data-anchor", anchor);
+    var ta = document.createElement("textarea");
+    ta.className = "cmt-text";
+    ta.setAttribute("placeholder", "Comment on " + formatAnchor(anchor));
+    var actions = document.createElement("div");
+    actions.className = "cmt-actions";
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "btn cmt-add";
+    add.textContent = "Add";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "btn btn-secondary cmt-cancel";
+    cancel.textContent = "Cancel";
+    actions.appendChild(add);
+    actions.appendChild(cancel);
+    form.appendChild(ta);
+    form.appendChild(actions);
+    host.parentNode.insertBefore(form, host.nextSibling);
+    ta.focus();
+  }
+  function addComment(anchor, text) {
+    var id = ++commentSeq;
+    comments.push({ id: id, anchor: anchor, text: text });
+    var host = document.querySelector(anchorSelector(anchor));
+    if (!host) return;
+    var note = document.createElement("div");
+    note.className = "cmt-note";
+    note.setAttribute("data-anchor", anchor);
+    note.setAttribute("data-cid", String(id));
+    var span = document.createElement("span");
+    span.className = "cmt-note-text";
+    span.textContent = text;
+    var rm = document.createElement("button");
+    rm.type = "button";
+    rm.className = "cmt-rm";
+    rm.textContent = "×";
+    rm.setAttribute("aria-label", "Remove comment");
+    note.appendChild(span);
+    note.appendChild(rm);
+    var existing = document.querySelectorAll('.cmt-note[data-anchor="' + anchor.replace(/"/g, '\\\\"') + '"]');
+    var ref = existing.length > 0 ? existing[existing.length - 1] : host;
+    ref.parentNode.insertBefore(note, ref.nextSibling);
+    refresh();
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest(".cmt-add")) {
+      var form = document.querySelector(".cmt-form");
+      var anchor = form ? form.getAttribute("data-anchor") : "";
+      var ta = form ? form.querySelector("textarea") : null;
+      var text = ta ? ta.value.trim() : "";
+      closeOpenForm();
+      if (anchor && text) addComment(anchor, text);
+      return;
+    }
+    if (t.closest(".cmt-cancel")) {
+      closeOpenForm();
+      return;
+    }
+    var rm = t.closest(".cmt-rm");
+    if (rm) {
+      var note = rm.closest(".cmt-note");
+      if (note && note.parentNode) {
+        var cid = note.getAttribute("data-cid");
+        comments = comments.filter(function (c) { return String(c.id) !== cid; });
+        note.parentNode.removeChild(note);
+        refresh();
+      }
+      return;
+    }
+    var btn = t.closest(".cmt-btn");
+    if (btn) {
+      e.preventDefault();
+      openCommentForm(btn.getAttribute("data-anchor"));
+    }
+  });
+  attachCommentAffordances();
   refresh();
   var status = document.getElementById("copy-status");
   function setStatus(text) {
@@ -346,6 +496,10 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
         if (el.id === "copyable-response") return;
         el.value = ""; el.checked = false;
       });
+      document.querySelectorAll(".cmt-note, .cmt-form").forEach(function (el) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
+      comments = [];
       refresh();
       setStatus("reset");
     });
@@ -358,9 +512,14 @@ exports[`renderPlanPage > matches the snapshot for the demo presentation 1`] = `
     } else {
       sendBtn.addEventListener("click", function () {
         refresh();
+        var payload = buildFeedback();
+        if (!hasMeaningfulFeedback(payload)) {
+          setStatus("nothing to send yet — answer a decision or leave a comment first");
+          return;
+        }
         sendBtn.disabled = true;
         setStatus("sending...");
-        fetch(null, { method: "POST", headers: { "Content-Type": "text/plain" }, body: buildFeedback() })
+        fetch(null, { method: "POST", headers: { "Content-Type": "text/plain" }, body: payload })
           .then(function (res) {
             if (res.ok) {
               setStatus("sent — check your Pi session");

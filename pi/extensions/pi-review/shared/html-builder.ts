@@ -124,11 +124,19 @@ interface MarkdownLine {
  * All input is HTML-escaped before transformation, so agent-provided content
  * can never inject markup.
  */
-export function renderMarkdown(md: string): string {
+export function renderMarkdown(md: string, anchorPrefix?: string): string {
   const lines: MarkdownLine[] = md
     .split("\n")
     .map((text) => ({ text, consumed: false }));
   const parts: string[] = [];
+  // Comment anchors: numbered per section, attached to paragraphs, list
+  // items, and table rows. Headings and code blocks stay out of the system.
+  let anchorSeq = 0;
+  const anchorAttr = (): string => {
+    if (anchorPrefix === undefined) return "";
+    anchorSeq += 1;
+    return ` data-anchor="${escapeHtml(`${anchorPrefix}:p${anchorSeq}`)}"`;
+  };
   let i = 0;
 
   while (i < lines.length) {
@@ -150,8 +158,7 @@ export function renderMarkdown(md: string): string {
       }
       i += 1; // closing fence
       parts.push(`<pre><code>${escapeHtml(code.join("\n"))}</code></pre>`);
-      continue;
-    }
+      continue;    }
 
     // Heading. Body content sits under section h2, so map #..###### to h3..h6.
     const heading = raw.match(/^(#{1,6})\s+(.*)$/);
@@ -181,7 +188,7 @@ export function renderMarkdown(md: string): string {
         const [head, ...body] = rows;
         const thead = `<tr>${head.map((c) => `<th>${renderInline(escapeHtml(c))}</th>`).join("")}</tr>`;
         const tbody = body
-          .map((r) => `<tr>${r.map((c) => `<td>${renderInline(escapeHtml(c))}</td>`).join("")}</tr>`)
+          .map((r) => `<tr${anchorAttr()}>${r.map((c) => `<td>${renderInline(escapeHtml(c))}</td>`).join("")}</tr>`)
           .join("");
         parts.push(`<div class="table-wrap"><table><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`);
       }
@@ -192,7 +199,7 @@ export function renderMarkdown(md: string): string {
     if (/^[-*]\s+/.test(raw)) {
       const items: string[] = [];
       while (i < lines.length && /^[-*]\s+/.test(lines[i].text.trim())) {
-        items.push(`<li>${renderInline(escapeHtml(lines[i].text.trim().replace(/^[-*]\s+/, "")))}</li>`);
+        items.push(`<li${anchorAttr()}>${renderInline(escapeHtml(lines[i].text.trim().replace(/^[-*]\s+/, "")))}</li>`);
         i += 1;
       }
       parts.push(`<ul>${items.join("")}</ul>`);
@@ -203,7 +210,7 @@ export function renderMarkdown(md: string): string {
     if (/^\d+\.\s+/.test(raw)) {
       const items: string[] = [];
       while (i < lines.length && /^\d+\.\s+/.test(lines[i].text.trim())) {
-        items.push(`<li>${renderInline(escapeHtml(lines[i].text.trim().replace(/^\d+\.\s+/, "")))}</li>`);
+        items.push(`<li${anchorAttr()}>${renderInline(escapeHtml(lines[i].text.trim().replace(/^\d+\.\s+/, "")))}</li>`);
         i += 1;
       }
       parts.push(`<ol>${items.join("")}</ol>`);
@@ -233,7 +240,7 @@ export function renderMarkdown(md: string): string {
       para.push(next);
       i += 1;
     }
-    parts.push(`<p>${renderInline(escapeHtml(para.join(" ")))}</p>`);
+    parts.push(`<p${anchorAttr()}>${renderInline(escapeHtml(para.join(" ")))}</p>`);
   }
 
   return parts.join("\n");
@@ -343,11 +350,27 @@ function pageCss(): string {
   #copyable-response { white-space: pre-wrap; font-size: 13px; max-height: 300px; overflow-y: auto; margin: 0; }
   .overall textarea { min-height: 90px; }
   .overall { border-left-color: var(--accent2); }
-  pre.diff { font-size: 12px; line-height: 1.45; }
-  pre.diff .add { color: var(--accent2); }
-  pre.diff .del { color: var(--danger); }
-  pre.diff .hunk { color: var(--accent); }
-  pre.diff .truncated { color: var(--warn); font-style: italic; }
+  pre.diff { font-size: 12px; line-height: 1.5; padding: 10px 8px; }
+  .diff-line { display: flex; align-items: baseline; white-space: pre-wrap; position: relative; padding-right: 30px; }
+  .diff-line .diff-ln { flex: none; width: 3.5em; text-align: right; padding-right: 12px; color: var(--muted); user-select: none; font-size: 11px; }
+  .diff-line .diff-code { flex: 1; overflow-wrap: anywhere; }
+  .diff-line.add .diff-code { color: var(--accent2); }
+  .diff-line.del .diff-code { color: var(--danger); }
+  .diff-line.hunk .diff-code { color: var(--accent); }
+  .diff-line.hunk { margin-top: 6px; }
+  .diff-line.truncated { color: var(--warn); font-style: italic; white-space: normal; }
+  .anchored { position: relative; }
+  .cmt-btn { position: absolute; left: -24px; top: 2px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--accent); background: var(--panel2); color: var(--accent); font-size: 13px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .12s; padding: 0; }
+  .anchored:hover > .cmt-btn, .anchored:focus-within > .cmt-btn, .cmt-btn:focus { opacity: 1; }
+  .diff-line .cmt-btn { left: auto; right: 6px; top: 1px; }
+  .cmt-form { display: flex; flex-direction: column; gap: 8px; margin: 8px 0; }
+  .cmt-form textarea { min-height: 48px; }
+  .cmt-actions { display: flex; gap: 8px; }
+  .cmt-actions .btn { padding: 6px 14px; font-size: 14px; }
+  .cmt-note { display: flex; align-items: baseline; gap: 10px; margin: 6px 0; padding: 8px 12px; background: rgba(224, 175, 104, 0.08); border-left: 3px solid var(--warn); border-radius: 0 8px 8px 0; font-size: 14.5px; }
+  .cmt-note-text { flex: 1; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cmt-rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 2px; line-height: 1; }
+  .cmt-rm:hover { color: var(--danger); }
   .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 14px; margin: 12px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
   @media (max-width: 1100px) { .wrap-plan { display: block; } .rail { display: none; } }
   @media (max-width: 640px) {
@@ -429,6 +452,16 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
   return `
 (function () {
   var META = ${meta};
+  var comments = [];
+  var commentSeq = 0;
+  function formatAnchor(anchor) {
+    var m = anchor.match(/^(.+):p(\\d+)$/);
+    if (m) return m[1] + " (para " + m[2] + ")";
+    return anchor;
+  }
+  function hasMeaningfulFeedback(text) {
+    return text.split("\\n").slice(3).join("\\n").trim().length > 0;
+  }
   function buildFeedback() {
     var lines = [];
     lines.push("# Feedback on: " + META.title);
@@ -449,6 +482,13 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
       if (decision) lines.push("Decision: " + decision.value);
       if (approval) lines.push("Approved: " + (approval.checked ? "yes" : "no"));
       if (notes) lines.push("Notes: " + notes);
+      lines.push("");
+    }
+    if (comments.length > 0) {
+      lines.push("## Comments");
+      for (var c = 0; c < comments.length; c++) {
+        lines.push("- " + formatAnchor(comments[c].anchor) + " — " + comments[c].text);
+      }
       lines.push("");
     }
     var overall = document.getElementById("overall-response");
@@ -505,6 +545,123 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
       setStatus("banner dismissed — decide in the sections as you read");
     });
   }
+  function anchorSelector(anchor) {
+    return '[data-anchor="' + anchor.replace(/"/g, '\\\\"') + '"]';
+  }
+  function attachCommentAffordances() {
+    var targets = document.querySelectorAll("[data-anchor]");
+    for (var i = 0; i < targets.length; i++) {
+      var el = targets[i];
+      if (el.classList.contains("anchored")) continue;
+      el.classList.add("anchored");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "cmt-btn";
+      btn.setAttribute("aria-label", "Comment here");
+      btn.textContent = "+";
+      btn.setAttribute("data-anchor", el.getAttribute("data-anchor"));
+      if (el.tagName === "TR") {
+        var cell = el.querySelector("td, th");
+        if (cell) {
+          cell.classList.add("anchored");
+          cell.appendChild(btn);
+        } else {
+          el.appendChild(btn);
+        }
+      } else {
+        el.appendChild(btn);
+      }
+    }
+  }
+  function closeOpenForm() {
+    var open = document.querySelector(".cmt-form");
+    if (open && open.parentNode) open.parentNode.removeChild(open);
+  }
+  function openCommentForm(anchor) {
+    closeOpenForm();
+    var host = document.querySelector(anchorSelector(anchor));
+    if (!host) return;
+    var form = document.createElement("div");
+    form.className = "cmt-form";
+    form.setAttribute("data-anchor", anchor);
+    var ta = document.createElement("textarea");
+    ta.className = "cmt-text";
+    ta.setAttribute("placeholder", "Comment on " + formatAnchor(anchor));
+    var actions = document.createElement("div");
+    actions.className = "cmt-actions";
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "btn cmt-add";
+    add.textContent = "Add";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "btn btn-secondary cmt-cancel";
+    cancel.textContent = "Cancel";
+    actions.appendChild(add);
+    actions.appendChild(cancel);
+    form.appendChild(ta);
+    form.appendChild(actions);
+    host.parentNode.insertBefore(form, host.nextSibling);
+    ta.focus();
+  }
+  function addComment(anchor, text) {
+    var id = ++commentSeq;
+    comments.push({ id: id, anchor: anchor, text: text });
+    var host = document.querySelector(anchorSelector(anchor));
+    if (!host) return;
+    var note = document.createElement("div");
+    note.className = "cmt-note";
+    note.setAttribute("data-anchor", anchor);
+    note.setAttribute("data-cid", String(id));
+    var span = document.createElement("span");
+    span.className = "cmt-note-text";
+    span.textContent = text;
+    var rm = document.createElement("button");
+    rm.type = "button";
+    rm.className = "cmt-rm";
+    rm.textContent = "\u00d7";
+    rm.setAttribute("aria-label", "Remove comment");
+    note.appendChild(span);
+    note.appendChild(rm);
+    var existing = document.querySelectorAll('.cmt-note[data-anchor="' + anchor.replace(/"/g, '\\\\"') + '"]');
+    var ref = existing.length > 0 ? existing[existing.length - 1] : host;
+    ref.parentNode.insertBefore(note, ref.nextSibling);
+    refresh();
+  }
+  document.addEventListener("click", function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest(".cmt-add")) {
+      var form = document.querySelector(".cmt-form");
+      var anchor = form ? form.getAttribute("data-anchor") : "";
+      var ta = form ? form.querySelector("textarea") : null;
+      var text = ta ? ta.value.trim() : "";
+      closeOpenForm();
+      if (anchor && text) addComment(anchor, text);
+      return;
+    }
+    if (t.closest(".cmt-cancel")) {
+      closeOpenForm();
+      return;
+    }
+    var rm = t.closest(".cmt-rm");
+    if (rm) {
+      var note = rm.closest(".cmt-note");
+      if (note && note.parentNode) {
+        var cid = note.getAttribute("data-cid");
+        comments = comments.filter(function (c) { return String(c.id) !== cid; });
+        note.parentNode.removeChild(note);
+        refresh();
+      }
+      return;
+    }
+    var btn = t.closest(".cmt-btn");
+    if (btn) {
+      e.preventDefault();
+      openCommentForm(btn.getAttribute("data-anchor"));
+    }
+  });
+  attachCommentAffordances();
   refresh();
   var status = document.getElementById("copy-status");
   function setStatus(text) {
@@ -544,6 +701,10 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
         if (el.id === "copyable-response") return;
         el.value = ""; el.checked = false;
       });
+      document.querySelectorAll(".cmt-note, .cmt-form").forEach(function (el) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
+      comments = [];
       refresh();
       setStatus("reset");
     });
@@ -556,9 +717,14 @@ function feedbackScript(pageTitle: string, generatedAt: string, sendToPiUrl?: st
     } else {
       sendBtn.addEventListener("click", function () {
         refresh();
+        var payload = buildFeedback();
+        if (!hasMeaningfulFeedback(payload)) {
+          setStatus("nothing to send yet — answer a decision or leave a comment first");
+          return;
+        }
         sendBtn.disabled = true;
         setStatus("sending...");
-        fetch(${sendUrl}, { method: "POST", headers: { "Content-Type": "text/plain" }, body: buildFeedback() })
+        fetch(${sendUrl}, { method: "POST", headers: { "Content-Type": "text/plain" }, body: payload })
           .then(function (res) {
             if (res.ok) {
               setStatus("sent — check your Pi session");
@@ -713,7 +879,7 @@ export function renderPlanPage(presentation: Presentation, options: PlanPageOpti
       return `<section id="${escapeHtml(section.id)}" class="${addendumClass.trim()}" data-section-id="${escapeHtml(section.id)}" data-section-title="${escapeHtml(section.title)}">
 ${sectionHeadHtml(section, index + 1)}
 ${diagram}
-${renderMarkdown(section.body)}
+${renderMarkdown(section.body, section.id)}
 ${feedbackControlHtml(section)}
 </section>`;
     })
@@ -791,22 +957,58 @@ export interface DiffReview {
   files: DiffFileSection[];
 }
 
-/** Render one diff line with add/del/hunk coloring. */
-function renderDiffLine(line: string): string {
-  const escaped = escapeHtml(line);
-  if (escaped.startsWith("+")) return `<span class="add">${escaped}</span>`;
-  if (escaped.startsWith("-")) return `<span class="del">${escaped}</span>`;
-  if (escaped.startsWith("@@")) return `<span class="hunk">${escaped}</span>`;
-  return escaped;
+/** One diff row: line number gutter plus code, with an anchor on commentable lines. */
+function diffRow(kind: string, text: string, newLine: number | null, filePath: string): string {
+  const escaped = escapeHtml(text);
+  const anchor =
+    newLine !== null && filePath !== "" ? ` data-anchor="${escapeHtml(`${filePath}:${newLine}`)}"` : "";
+  const ln = `<span class="diff-ln">${newLine !== null ? String(newLine) : ""}</span>`;
+  const cls = kind !== "" ? ` ${kind}` : "";
+  return `<div class="diff-line${cls}"${anchor}>${ln}<span class="diff-code">${escaped}</span></div>`;
 }
 
-/** Render a unified diff as a colored pre block. */
-export function renderDiffText(diff: string, truncated: boolean): string {
-  const lines = diff.split("\n").map(renderDiffLine);
-  if (truncated) {
-    lines.push('<span class="truncated">--- diff truncated for this page; run `git diff --cached` in the terminal for the full diff ---</span>');
+/**
+ * Render a unified diff as colored per-line rows. New-file line numbers are
+ * parsed off the hunk headers; plus and context lines carry a
+ * `file:line` comment anchor, minus and meta lines do not. Everything before
+ * the first hunk header is metadata (diff --git, index, ---, +++) and never
+ * anchored.
+ */
+export function renderDiffText(diff: string, truncated: boolean, filePath = ""): string {
+  const rows: string[] = [];
+  let newLine = 0;
+  let inHunks = false;
+  for (const line of diff.split("\n")) {
+    const hunk = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
+    if (hunk) {
+      inHunks = true;
+      newLine = parseInt(hunk[1], 10);
+      rows.push(diffRow("hunk", line, null, ""));
+      continue;
+    }
+    if (line === "") continue;
+    if (!inHunks) {
+      rows.push(diffRow("", line, null, ""));
+      continue;
+    }
+    if (line.startsWith("+")) {
+      rows.push(diffRow("add", line, newLine, filePath));
+      newLine += 1;
+    } else if (line.startsWith("-")) {
+      rows.push(diffRow("del", line, null, ""));
+    } else if (line.startsWith(" ")) {
+      rows.push(diffRow("", line, newLine, filePath));
+      newLine += 1;
+    } else {
+      rows.push(diffRow("", line, null, "")); // e.g. "\ No newline at end of file"
+    }
   }
-  return `<pre class="diff"><code>${lines.join("\n")}</code></pre>`;
+  if (truncated) {
+    rows.push(
+      `<div class="diff-line truncated">--- diff truncated for this page; run \`git diff --cached\` in the terminal for the full diff ---</div>`,
+    );
+  }
+  return `<pre class="diff">${rows.join("")}</pre>`;
 }
 
 export interface DiffPageOptions extends PlanPageOptions {}
@@ -833,7 +1035,7 @@ export function renderDiffPage(review: DiffReview, options: DiffPageOptions = {}
         id,
         title: file.path,
         takeaway: file.explanation,
-        body: renderDiffText(file.diff, file.truncated),
+        body: renderDiffText(file.diff, file.truncated, file.path),
         feedback: { kind: "approval", label: `Approve changes to ${file.path}` },
       };
       return section;
