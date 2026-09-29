@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   escapeHtml,
+  renderDiffText,
   renderMarkdown,
   renderPlanPage,
   renderResponsesMd,
@@ -41,6 +42,69 @@ const demoPresentation: Presentation = {
     },
   ],
 };
+
+describe("renderDiffText", () => {
+  const diff = [
+    "diff --git a/user.ts b/user.ts",
+    "index 123..456 100644",
+    "--- a/user.ts",
+    "+++ b/user.ts",
+    "@@ -10,4 +10,5 @@ function run() {",
+    " const old = load();",
+    "-const x = 1;",
+    "+const x = 2;",
+    "+const y = 3;",
+    "\\ No newline at end of file",
+    "",
+  ].join("\n");
+
+  it("parses new-file line numbers and anchors plus and context lines only", () => {
+    const html = renderDiffText(diff, false, "user.ts");
+    expect(html).toContain('<div class="diff-line hunk"');
+    expect(html).toContain('data-anchor="user.ts:10"');
+    expect(html).toContain('data-anchor="user.ts:11"');
+    expect(html).toContain('data-anchor="user.ts:12"');
+    expect(html).not.toContain('data-anchor="user.ts:13"');
+    expect(html).toContain('<div class="diff-line del">');
+    expect(html).not.toContain('data-anchor="diff --git');
+  });
+
+  it("renders a line-number gutter and keeps the truncation notice as a row", () => {
+    const html = renderDiffText(diff, false, "user.ts");
+    expect(html).toMatch(/<span class="diff-ln">10<\/span>/);
+    expect(renderDiffText("@@ -1,1 +1,1 @@\n x", true, "f")).toContain("diff-line truncated");
+  });
+
+  it("escapes diff content in every row", () => {
+    const hostile = "@@ -1,2 +1,2 @@\n+<script>alert(1)</script>";
+    const html = renderDiffText(hostile, false, "f");
+    expect(html).toContain("&lt;script&gt;");
+    expect(html).not.toContain("<script>");
+  });
+});
+
+describe("renderMarkdown comment anchors", () => {
+  it("numbers paragraphs, list items, and table rows sequentially", () => {
+    const md = "Intro paragraph.\n\n- one\n- two\n\n| A |\n| --- |\n| 1 |\n\n### Heading\n\nLast paragraph.";
+    const html = renderMarkdown(md, "sec");
+    expect(html).toContain('<p data-anchor="sec:p1">');
+    expect(html).toContain('<li data-anchor="sec:p2">');
+    expect(html).toContain('<li data-anchor="sec:p3">');
+    expect(html).toContain('<tr data-anchor="sec:p4">');
+    expect(html).toContain('<p data-anchor="sec:p5">');
+    expect(html).not.toContain('data-anchor="sec:p6"');
+  });
+
+  it("leaves headings and code blocks unanchored", () => {
+    const html = renderMarkdown("### H\n\n```\ncode\n```", "sec");
+    expect(html).not.toContain("data-anchor");
+    expect(html).toContain("<h5>H</h5>");
+  });
+
+  it("emits no anchors without a prefix", () => {
+    expect(renderMarkdown("Text.")).not.toContain("data-anchor");
+  });
+});
 
 describe("escapeHtml", () => {
   it("escapes markup-significant characters", () => {
@@ -282,6 +346,18 @@ describe("renderPlanPage rail and banner", () => {
     const html = renderPlanPage(demoPresentation);
     expect(html).toContain("@media (max-width: 1100px)");
     expect(html).toContain(".rail { display: none; }");
+  });
+});
+
+describe("renderPlanPage comment wiring", () => {
+  it("anchors section bodies and carries the comment machinery in the script", () => {
+    const html = renderPlanPage(demoPresentation);
+    expect(html).toContain('data-anchor="summary:p1"');
+    expect(html).toContain("cmt-btn");
+    expect(html).toContain('"## Comments"');
+    expect(html).toContain("hasMeaningfulFeedback");
+    expect(html).toContain("nothing to send yet");
+    expect(html).toContain("formatAnchor");
   });
 });
 
