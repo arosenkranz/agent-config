@@ -24,7 +24,7 @@ AGENT_CONFIG=$(jq -r '.extraKnownMarketplaces["arosenkranz-claude-plugins"].sour
 
 # 2. Known checkout locations (personal machine: ~/Code; work machine: ~/workspace)
 if [ -z "$AGENT_CONFIG" ] || [ ! -d "$AGENT_CONFIG" ]; then
-  for c in ~/Code/agent-config ~/workspace/agent-config; do
+  for c in ~/Code/agent-config ~/workspace/tools/agent-config; do
     [ -d "$c/.git" ] && AGENT_CONFIG="$c" && break
   done
 fi
