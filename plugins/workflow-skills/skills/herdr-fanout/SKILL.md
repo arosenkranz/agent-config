@@ -77,6 +77,8 @@ herdr worktree create --cwd "<repo root>" --branch "<prefix>/<slug>" --label "<s
 
 Use `feat/` as prefix unless the task is clearly a fix (`fix/`). Save `.result.workspace.workspace_id`, `.result.root_pane.pane_id`, and `.result.worktree.path`. If it fails because the repository isn't trusted by herdr, stop and tell Alex — never add `--trust-repository` yourself.
 
+If no herdr workspace was open for the repo itself, herdr also opens one for the repo root alongside the first worktree. That's normal; leave it.
+
 **b. Start the agent** (name `fo-<slug>`, max 32 chars):
 
 ```bash
@@ -85,7 +87,7 @@ herdr agent start fo-<slug> --kind <claude|pi> --pane <root_pane> --timeout 6000
 
 Omit `-- --model …` if Alex chose the default model.
 
-**c. If it returns `agent_not_ready`**, read the screen:
+**c. If it returns `agent_not_ready`** (expected for Claude in every new worktree; pi workers start without a trust prompt), read the screen:
 
 ```bash
 herdr agent read fo-<slug> --source visible
