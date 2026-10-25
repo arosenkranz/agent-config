@@ -1,5 +1,5 @@
 {
   "name": "workflow-skills",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Daily-driver workflow skills — workspace, planning (morning/end-of-day/weekly), task lifecycle (start-task, patrol, capture), skill meta-tools (find-skills, improve-skills, skill-creator, mcp-builder), and cross-cutting utilities (pdf, xlsx, evolve, optimize, search-first)"
 }
