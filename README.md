@@ -79,7 +79,7 @@ Restart pi, then run `/claude-marketplace` to confirm the sync. See [`pi/README.
 
 ### workflow-skills
 
-19 daily-driver skills invocable via `/skill-name`:
+22 daily-driver skills invocable via `/skill-name`:
 
 ```
 /morning-plan        /end-of-day          /weekly-review
@@ -88,7 +88,8 @@ Restart pi, then run `/claude-marketplace` to confirm the sync. See [`pi/README.
 /improve-skills      /find-skills         /skill-creator
 /mcp-builder         /spec-and-plan       /pdf
 /xlsx                /evolve              /plan-review
-/herdr-cheatsheet
+/herdr-cheatsheet    /herdr-fanout        /herdr-review
+/herdr-layout
 ```
 
 ### git-and-pr

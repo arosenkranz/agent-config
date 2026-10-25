@@ -2,7 +2,7 @@
 
 ## Architecture
 
-This repo is a personal agent configuration published as a Claude Code marketplace with 7 plugins (32 skills, 6 agents total):
+This repo is a personal agent configuration published as a Claude Code marketplace with 7 plugins (35 skills, 6 agents total):
 - `workflow-skills` — daily-driver workflow skills invocable via `/name`
 - `goldeneye-agents` — specialized subagents (boris, m, natalya, q, trevelyan, xenia)
 - `dev-environment` — lifecycle hooks, commands (coding standards)
@@ -60,7 +60,7 @@ cp config-templates/CLAUDE.md.template ~/.claude/CLAUDE.md
 
 ## Adding or modifying hooks
 
-Edit `plugins/dev-environment/hooks/hooks.json` directly. The `${CLAUDE_PLUGIN_ROOT}` variable resolves to the plugin directory at runtime.
+Edit `plugins/dev-environment/hooks/hooks.json` directly. Exception: a hook that only serves one plugin's skills lives in that plugin (`plugins/workflow-skills/hooks/hooks.json` runs `scripts/herdr-status` for the herdr skills), because a plugin can only reach its own files through `${CLAUDE_PLUGIN_ROOT}`. The `${CLAUDE_PLUGIN_ROOT}` variable resolves to the plugin directory at runtime.
 
 ## Coding standards
 

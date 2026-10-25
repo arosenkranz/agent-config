@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+# herdr-status — Reports workflow status into the herdr sidebar.
+# Shared by the Claude hook (workflow-skills/hooks/hooks.json), the pi extension
+# (pi/extensions/herdr-status), and the herdr-* skills, so every harness writes
+# the same tokens under the same source.
+#
+# Usage:
+#   herdr-status [--workspace ID] [--pane ID] set KEY=VALUE...
+#   herdr-status [--workspace ID] [--pane ID] clear KEY...
+#   herdr-status [--workspace ID] refresh [--async]
+#   herdr-status [--workspace ID] watch PR_NUMBER        (internal; started by refresh)
+#
+# Tokens: `task` is a pane token (what this agent is doing); everything else
+# (pr, ci, tests, review) is a workspace token. Show them by adding $pr, $ci,
+# $tests, $review to [ui.sidebar.spaces] rows and $task to [ui.sidebar.agents]
+# rows in ~/.config/herdr/config.toml.
+#
+# Always exits 0 outside herdr or on herdr/gh failures: hooks must never block
+# or slow down the agent. Only usage errors exit non-zero.
+
+set -uo pipefail
+
+SOURCE="agent-config"
+CI_PENDING_TTL_MS=3000000   # 50 min: a dead watcher can't leave "ci …" forever
+WATCH_TIMEOUT_S=2700        # 45 min cap on one `gh pr checks --watch`
+GH_TIMEOUT_S=15
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+
+usage() {
+  sed -n '7,11p' "$SELF" | sed 's/^# \{0,1\}//' >&2
+  exit 2
+}
+
+# Outside herdr this is a silent no-op, so hooks cost nothing in plain terminals.
+[[ "${HERDR_ENV:-}" == "1" ]] || exit 0
+command -v herdr >/dev/null 2>&1 || exit 0
+
+workspace="${HERDR_WORKSPACE_ID:-}"
+pane="${HERDR_PANE_ID:-}"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --workspace) workspace="${2:-}"; shift 2 ;;
+    --pane) pane="${2:-}"; shift 2 ;;
+    *) break ;;
+  esac
+done
+[[ $# -gt 0 ]] || usage
+cmd="$1"; shift
+
+# macOS has no coreutils `timeout`; perl's alarm survives exec.
+with_timeout() {
+  local secs="$1"; shift
+  perl -e 'alarm shift @ARGV; exec @ARGV' "$secs" "$@"
+}
+
+report_workspace() {
+  [[ -n "$workspace" ]] || return 0
+  herdr workspace report-metadata "$workspace" --source "$SOURCE" "$@" >/dev/null 2>&1 || true
+}
+
+report_pane() {
+  [[ -n "$pane" ]] || return 0
+  herdr pane report-metadata "$pane" --source "$SOURCE" "$@" >/dev/null 2>&1 || true
+}
+
+# Prints pass | fail | pending | none for a PR's checks.
+ci_state() {
+  local buckets
+  buckets=$(with_timeout "$GH_TIMEOUT_S" gh pr checks "$1" --json bucket --jq '.[].bucket' 2>/dev/null || true)
+  if grep -qE '^(fail|cancel)$' <<<"$buckets"; then echo fail
+  elif grep -qx pending <<<"$buckets"; then echo pending
+  elif grep -qx pass <<<"$buckets"; then echo pass
+  else echo none
+  fi
+}
+
+report_ci() {
+  case "$1" in
+    pass) report_workspace --token "ci=ci ✓" ;;
+    fail) report_workspace --token "ci=ci ✗" ;;
+    pending) report_workspace --token "ci=ci …" --ttl-ms "$CI_PENDING_TTL_MS" ;;
+    *) report_workspace --clear-token ci ;;
+  esac
+}
+
+lock_dir() {
+  echo "${TMPDIR:-/tmp}/herdr-status-locks/${workspace//[^A-Za-z0-9_-]/_}-$1"
+}
+
+# One watcher per workspace+PR. mkdir is atomic; a stale lock (dead pid) is reclaimed.
+acquire_lock() {
+  local dir; dir=$(lock_dir "$1")
+  mkdir -p "$(dirname "$dir")"
+  if ! mkdir "$dir" 2>/dev/null; then
+    local pid; pid=$(cat "$dir/pid" 2>/dev/null || true)
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      return 1
+    fi
+    rm -rf "$dir"
+    mkdir "$dir" 2>/dev/null || return 1
+  fi
+  echo $$ >"$dir/pid"
+}
+
+release_lock() {
+  rm -rf "$(lock_dir "$1")"
+}
+
+refresh() {
+  command -v gh >/dev/null 2>&1 || return 0
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 0
+
+  local info
+  info=$(with_timeout "$GH_TIMEOUT_S" gh pr view --json number,state,isDraft \
+    --jq '"\(.number) \(.state) \(.isDraft)"' 2>/dev/null || true)
+  if [[ -z "$info" ]]; then
+    report_workspace --clear-token pr --clear-token ci
+    return 0
+  fi
+
+  local number state draft label
+  read -r number state draft <<<"$info"
+  case "$state" in
+    MERGED) label="#$number merged" ;;
+    CLOSED) label="#$number closed" ;;
+    *) [[ "$draft" == "true" ]] && label="#$number draft" || label="#$number" ;;
+  esac
+  report_workspace --token "pr=$label"
+
+  local ci; ci=$(ci_state "$number")
+  report_ci "$ci"
+  # CI usually finishes after the agent goes idle, so hand off to a watcher.
+  if [[ "$ci" == "pending" ]]; then
+    ( "$SELF" --workspace "$workspace" watch "$number" </dev/null >/dev/null 2>&1 & )
+  fi
+}
+
+watch() {
+  local number="${1:-}"
+  [[ "$number" =~ ^[0-9]+$ ]] || usage
+  command -v gh >/dev/null 2>&1 || return 0
+  acquire_lock "$number" || return 0
+  # Expand now: $number is a function local and is gone by the time EXIT fires.
+  # shellcheck disable=SC2064
+  trap "release_lock $number" EXIT
+  report_ci pending
+  with_timeout "$WATCH_TIMEOUT_S" gh pr checks "$number" --watch --interval 30 >/dev/null 2>&1 || true
+  report_ci "$(ci_state "$number")"
+}
+
+case "$cmd" in
+  set)
+    [[ $# -gt 0 ]] || usage
+    for pair in "$@"; do
+      [[ "$pair" == *=* ]] || usage
+      key="${pair%%=*}"
+      if [[ "$key" == "task" ]]; then
+        report_pane --token "$pair"
+      else
+        report_workspace --token "$pair"
+      fi
+    done
+    ;;
+  clear)
+    [[ $# -gt 0 ]] || usage
+    for key in "$@"; do
+      if [[ "$key" == "task" ]]; then
+        report_pane --clear-token task
+      else
+        report_workspace --clear-token "$key"
+      fi
+    done
+    ;;
+  refresh)
+    if [[ "${1:-}" == "--async" ]]; then
+      ( "$SELF" --workspace "$workspace" --pane "$pane" refresh </dev/null >/dev/null 2>&1 & )
+    else
+      refresh
+    fi
+    ;;
+  watch)
+    watch "${1:-}"
+    ;;
+  *)
+    usage
+    ;;
+esac
+exit 0
