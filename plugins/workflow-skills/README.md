@@ -1,25 +1,14 @@
 # workflow-skills
 
-92 productivity skills for Claude Code, invocable via `/skill-name`.
+Workflow skills shared by Claude Code and pi: capture, workspace, search-first, optimize, skill-creator, plan-review, and the four Herdr helpers below.
 
 ## Usage
 
-Skills are auto-discovered by Claude Code when this plugin is enabled. Invoke any skill with:
+Skills are auto-discovered when this plugin is enabled. Use `/capture`, `/search-first`, etc. in Claude Code and `/skill:capture`, `/skill:search-first`, etc. in pi.
 
-```
-/morning-plan
-/course-review
-/doc-generate
-```
+## Retrospectives
 
-## Notable Skills
-
-- `morning-plan` — Daily standup and task planning
-- `course-review` — Learning content review
-- `doc-generate` — Documentation generation
-- `agent-browser` — Browser automation via Playwright
-- `api-scaffold` — REST API scaffolding
-- `continuous-learning-v2` — Tool use pattern observation
+Version 2.0.0 removes `improve-skills`, which autonomously edited installed Claude files. Use the separately installed Matt Pocock `retro` skill for suggestions, then approve any edits separately. Keep `optimize` for usage audits and `skill-creator` for authoring and evaluation. See [shared installation and workflow boundaries](../../docs/matt-pocock-skills.md).
 
 ## Requirements
 

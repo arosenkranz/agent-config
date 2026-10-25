@@ -73,21 +73,38 @@ Add the forked sync extension to the `packages` array in `~/.pi/agent/settings.j
 
 Restart pi, then run `/claude-marketplace` to confirm the sync. See [`pi/README.md`](pi/README.md) for details.
 
+### Optional: Matt Pocock's shared skills
+
+Install the reviewed set once for both Claude Code and pi:
+
+```bash
+python3 scripts/install-matt-skills.py
+python3 scripts/install-matt-skills.py --check
+```
+
+This pins the source and skills CLI, installs 27 selected skills into `~/.agents/skills/`, and links Claude to the same files. pi discovers the shared directory natively. Do not also install Matt's plugin or a separate pi copy. Requires Python 3.10+, Node 22.20+, npm, and git.
+
+Read [the integration policy](docs/matt-pocock-skills.md) for invocation, updates, rollback, per-project setup, and workflow ownership. Matt's techniques complement the existing approval gates and `/ship`; they don't replace them. Superpowers and the official review/commit helpers are no longer part of this host's preferred workflow. The local `improve-skills` skill is retired in favor of Matt's explicit `retro` and separately approved edits.
+
+## Installer tests
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py'
+```
+
+These offline tests exercise install selection, collision refusal, shared links, explicit-only settings, idempotence, edit detection, and failure cleanup without calling npm or changing real home directories.
+
 ---
 
 ## Plugins
 
 ### workflow-skills
 
-22 daily-driver skills invocable via `/skill-name`:
+10 daily-driver skills invocable via `/skill-name` (Matt's skills are installed separately):
 
 ```
-/morning-plan        /end-of-day          /weekly-review
-/capture             /start-task          /patrol
-/workspace           /search-first        /optimize
-/improve-skills      /find-skills         /skill-creator
-/mcp-builder         /spec-and-plan       /pdf
-/xlsx                /evolve              /plan-review
+/capture             /workspace           /search-first
+/optimize            /skill-creator       /plan-review
 /herdr-cheatsheet    /herdr-fanout        /herdr-review
 /herdr-layout
 ```
@@ -180,5 +197,7 @@ These are never tracked by git — each machine maintains its own (third-party e
 - `~/.claude/CLAUDE.md` — identity, machine paths, infrastructure context
 - `~/.pi/agent/settings.json` — pi model, packages, and local extensions
 - `~/.pi/agent/extensions/` — machine-local pi extensions
+- `~/.agents/skills/` and `~/.claude/skills/` — third-party shared skills and Claude links
+- `~/.local/state/agent-config/matt-pocock-skills.json` — host installation receipt and file hashes
 
 Start from the templates in `config-templates/`.

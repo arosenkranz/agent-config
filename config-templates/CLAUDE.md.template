@@ -1,54 +1,34 @@
 # CLAUDE.md - Development Environment
 
-## About Me
+## About me
 <!-- Customize: your name, role, and what you use this machine for -->
 
-## Identity & Context
-<!-- Optional: named agent identity, automation stack context -->
-<!-- Example: This system uses a named agent identity ('Deacon'). -->
+## Development setup
 
-## Development Setup
+- Projects live in `~/Code`; read the project's package manifest before assuming its stack.
+- Version control and PRs: GitHub CLI (`gh`).
+- Prefer explanations that teach the reason behind a change.
 
-### Primary Languages & Frameworks
-<!-- List your languages and frameworks -->
+## Workflow policy
 
-### Project Structure
-<!-- Where do your projects live? e.g., ~/Code, ~/workspace -->
-- All projects live in `~/Code`
-- Version control: GitHub
+<!-- Replace these with absolute paths to your agent-config checkout.
+     Put the same pointers in the instruction file pi reads (e.g. ~/AGENTS.md).
+     These are policy pointers, not an inventory of auto-discovered skills. -->
 
-### Development Tools
-- **Linting/Formatting**: ESLint, Prettier (or language-specific tooling)
-- **Testing**: Open to recommendations based on project needs
-- **GitHub**: GitHub CLI (`gh`) for PR/issue management
-- **Platform**: macOS (Darwin)
-
-## Working Style
-- Prefer explanations and guidance to help me learn
-- Like to understand the "why" behind solutions
-- Open to trying new tools and approaches
+- For implementation, read `~/Code/agent-config/plugins/dev-environment/commands/git-workflow.md` and `testing.md` in the same directory.
+- When using Matt Pocock's skills, read `~/Code/agent-config/docs/matt-pocock-skills.md` for harness adaptation, workflow ownership, and approval boundaries.
 
 ## Guardrails
 
-Rules that override default behavior to prevent common wrong-approach friction:
+1. **Branch and PR by default.** Create a feature branch before implementation. Use `ship` for checks, commit, push, PR, and CI; merge only when asked. Keep commit messages short and use squash merge by default.
+2. **Match the request.** Implement clear tasks directly. Clarify consequential unknowns. Don't create planning documents, specs, tickets, labels, or glossaries unless the requested scope calls for them. Present substantive plans through the harness review tool when available and wait for feedback.
+3. **Pressure-test consequential choices.** Follow the shared workflow's Goldeneye review requirements. If a reviewer can't start, report the blocker and ask before bypassing review or changing runners.
+4. **Test behavior.** Write tests alongside code. For UI/runtime bugs, also observe the behavior in a real browser. Follow the project's lint/typecheck/test commands before committing.
+5. **One scoped task.** Keep unrelated cleanup out of the branch. Note separate issues rather than silently expanding the change.
+6. **Honor approval gates.** A skill's instruction to commit or publish does not override the branch policy or harness gates. Delegate only when the user or applicable project instructions authorize it.
+7. **Non-interactive commands.** Use supported non-interactive flags for agent-run commands. A human-run interactive wizard is a deliverable, not a command for the agent to execute.
+8. **Process cleanup.** Run tests once, not in watch mode. Stop dev servers and watchers when finished; name any process that must persist.
 
-1. **Git workflow default** — Always create a feature branch and PR unless explicitly told to commit directly to main. Never commit directly to main by default. Use `gh pr create` for all PRs. **Squash-merge is the default PR strategy** (so frequent in-branch commits stay clean in the main history).
+## Discovery
 
-2. **Plan-first default** — For non-trivial changes, write a plan before writing code. **Skip planning only when ALL of these are true:** the change is single-file, under ~20 lines, no new dependencies, no API/schema/auth/security/migration impact, no user-visible behavior change. Examples that **skip** planning: typo fix, one-line bug fix, single rename across one file, isolated config tweak. Examples that **require** planning: any multi-file change, new endpoint or schema field, anything touching auth/security/concurrency, anything that changes user-visible behavior. For "requires planning" cases: write either a 3-bullet inline plan (small) or a `PLAN.md` (larger). **Do not begin implementation until the user explicitly approves the plan.** Once approved, prefer clearing context (`/clear` or new session) before executing. **Source: Datadog Agentic Coding Patterns — "Plan before you execute" + "Iterate on the plan".**
-
-3. **Spec-before-plan for ambiguous features** — When the feature has unclear or under-specified requirements, write `SPEC.md` first focused on observable behavior, ask clarifying questions, iterate to user signoff, *then* derive `PLAN.md` from the spec. Trigger: any new feature where the description includes hedging language ("something like…", "I want X-ish…") or omits inputs/outputs/edge cases. Use the `/spec-and-plan` skill to drive the SPEC → PLAN → EXECUTE flow. **Source: Datadog Agentic Coding Patterns — "Spec before you plan".**
-
-4. **Frequent small commits, squash on merge** — Inside a feature branch, commit after each meaningful step (a passing test, a working sub-feature, before any review loop, before any context-clear). Keep messages short. The PR will be squash-merged so noisy in-branch history is fine. **Source: Datadog Agentic Coding Patterns — "Commit frequently".**
-
-5. **One scoped task at a time** — One feature branch = one logical change. Do not bundle unrelated edits ("while I'm here, I'll also fix X"). If you discover a separate issue mid-task, either note it and continue, or stop and start a new branch — do not mix. **Source: Datadog Agentic Coding Patterns — "One thing at a time".**
-
-6. **Local diff review before agent review** — After implementing changes, **first** run `git diff` (or `git show` per commit) and self-review against the plan/spec. Then spawn the `trevelyan` goldeneye subagent (Opus, adversarial reviewer) to review the diff. Apply useful suggestions; if rejected, leave a one-line reason. **Cap at 2 review rounds.** Re-loop only if trevelyan returns CRITICAL or HIGH severity issues — do not keep looping on stylistic nitpicks. **Source: Datadog Agentic Coding Patterns — "Review the changeset locally" + "Get agent review in a loop".**
-
-7. **Non-interactive shell commands** — When running install scripts, package managers, or CLIs that may prompt for input, always add non-interactive flags: `--yes`, `--force`, `-y`, `--non-interactive`. Claude cannot respond to interactive prompts.
-
-8. **UI/design boldness** — When making UI/styling changes, prefer bold and noticeable over conservative. Use `text-base` or larger for labels. Make changes the user can see at a glance.
-
-## Gotchas
-
-- Agents, skills, rules, and hooks are **auto-discovered** from `~/.claude/` — do not manually catalog them in this file
-- `bypassPermissions` is enabled but compound shell commands may still trigger permission prompts
+Skills, agents, and hooks are auto-discovered. Don't duplicate their catalog here. Matt's reviewed shared files are installed separately using the instructions in `docs/matt-pocock-skills.md`; don't install a second plugin copy.
