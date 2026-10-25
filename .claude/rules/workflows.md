@@ -50,13 +50,29 @@ cp config-templates/CLAUDE.md.template ~/.claude/CLAUDE.md
 
 1. Create `plugins/workflow-skills/skills/<name>/SKILL.md` with `name` and `description` frontmatter
 2. Add any references, templates, or scripts in the same directory
-3. The skill is immediately discoverable via `/name` — no registration needed
+3. No registration needed — but bump the plugin version before merging (see [Shipping plugin changes](#shipping-plugin-changes))
 
 ## Adding a new agent
 
 1. Create `plugins/goldeneye-agents/agents/<name>.md`
 2. Include the agent's system prompt and trigger conditions
-3. Auto-discovered — no registration needed
+3. Auto-discovered — no registration needed; bump `goldeneye-agents`' version before merging
+
+## Shipping plugin changes
+
+Any PR that changes files under `plugins/<plugin>/` must bump `version` in `plugins/<plugin>/.claude-plugin/plugin.json` (semver: patch for fixes and wording, minor for new skills/agents/commands/hooks, major for removals or renames).
+
+Why: Claude Code installs plugins into `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/` and `claude plugin update` only re-installs when the version changes. Without a bump the merge reaches GitHub but installed copies silently stay stale (this happened with `workflow-skills` 1.1.0 — fixed in #29). pi is unaffected: it re-pulls the marketplace on startup and loads `pi/` extensions from this checkout.
+
+After merging, update and verify:
+
+```bash
+claude plugin marketplace update arosenkranz-claude-plugins
+claude plugin update <plugin>@arosenkranz-claude-plugins   # then restart Claude Code
+ls ~/.claude/plugins/cache/arosenkranz-claude-plugins/<plugin>/   # new version dir present
+```
+
+In pi, run `/reload` (or start a new session).
 
 ## Adding or modifying hooks
 
