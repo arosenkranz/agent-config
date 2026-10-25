@@ -1,6 +1,6 @@
 ---
 name: herdr-fanout
-description: Split a coding task into up to 3 independent parts and run each in its own herdr git worktree with its own Claude Code or pi worker, each landing its own reviewed PR, hands-off. Also cleans up merged fan-out worktrees. Use only when the user explicitly asks to fan out, parallelize, or run parallel agents/workers with herdr (or invokes /herdr-fanout). Requires HERDR_ENV=1.
+description: Split a coding task into up to 3 independent parts and run each in its own herdr git worktree with its own Claude Code or pi worker, each landing its own reviewed PR, hands-off. Also cleans up merged fan-out worktrees. Runs only when the user explicitly asks to fan out, parallelize, or run parallel agents/workers with herdr (or invokes /herdr-fanout). Also load it, inside herdr (HERDR_ENV=1), when the user gives you a task that clearly splits into 2-3 independent parts touching different files — but then only SUGGEST fan-out in one line and wait; never start it without the user's yes.
 user-invocable: true
 ---
 
@@ -9,6 +9,16 @@ user-invocable: true
 Runs up to 3 workers at once, each in its own herdr worktree workspace (own directory, own branch, own sidebar row). Each worker implements its part, opens a PR, and gets a cross-agent review. Alex is only pulled in for blockers; the sidebar is the alert channel.
 
 Modes: `/herdr-fanout <task>` runs a fan-out. `/herdr-fanout cleanup` removes finished worktrees (see the end).
+
+## Suggest, don't start
+
+If Alex did **not** ask for a fan-out — you loaded this skill because a task looks splittable — do not run any step below. Instead:
+
+1. Check it's worth suggesting: `test "${HERDR_ENV:-}" = 1`, you're in a git repo, and the task really splits into 2-3 parts that touch **different files** and each make sense as their own PR. Small tasks (one PR's worth, or one file) don't qualify — just do the work, no suggestion.
+2. Suggest it in one line, naming the parts, e.g. "This splits into 3 independent parts (auth middleware, billing webhook, docs) — want me to fan it out with /herdr-fanout, or do it here?"
+3. Stop and wait. Only a clear yes ("yes", "fan it out", "go") starts step 1 below. Anything else — including silence, a question, or "just do it" — means do the task normally in this session.
+
+Suggest at most once per task. If Alex declines, don't bring it up again for that task.
 
 ## Ground rules
 

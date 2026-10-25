@@ -43,7 +43,7 @@ Skills for [herdr](https://herdr.dev) power use. They work in Claude Code (`/nam
 | Skill | What it does |
 |---|---|
 | `herdr-cheatsheet` | Keybinding/config lookup against your own `config.toml`; opens the web cheatsheet |
-| `herdr-fanout` | Splits a task into ≤3 parts, one worktree + Claude/pi worker each, one reviewed PR each; `cleanup` removes merged worktrees |
+| `herdr-fanout` | Splits a task into ≤3 parts, one worktree + Claude/pi worker each, one reviewed PR each; `cleanup` removes merged worktrees. Suggests itself (one line, waits for your yes) when a task clearly splits into independent parts |
 | `herdr-review` | Second-opinion review by any Claude/pi model you pick, posted to the PR, verdict in the sidebar |
 | `herdr-layout` | Auto-detected `dev` tab with server/tests/logs panes the agent can watch |
 
