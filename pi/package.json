@@ -17,20 +17,23 @@
   "files": [
     "extensions/claude-marketplace/**/*.ts",
     "extensions/pi-review/**/*.ts",
+    "extensions/herdr-status/**/*.ts",
     "README.md",
     "CHANGELOG.md",
     "tsconfig.json"
   ],
   "scripts": {
-    "test": "npm run test:marketplace && npm run test:pi-review",
+    "test": "npm run test:marketplace && npm run test:pi-review && npm run test:herdr-status",
     "test:marketplace": "tsx extensions/claude-marketplace/test.ts",
     "test:pi-review": "vitest run extensions/pi-review",
+    "test:herdr-status": "vitest run extensions/herdr-status",
     "typecheck": "tsc -p tsconfig.json",
     "check": "npm run typecheck && npm test"
   },
   "pi": {
     "extensions": [
-      "./extensions/claude-marketplace/index.ts"
+      "./extensions/claude-marketplace/index.ts",
+      "./extensions/herdr-status/index.ts"
     ]
   },
   "peerDependencies": {

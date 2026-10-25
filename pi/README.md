@@ -4,6 +4,7 @@ This directory holds the pi extensions maintained in `agent-config`:
 
 - **claude-marketplace** (local fork of `datadog-pi-packages/packages/claude-marketplace`) — the bridge that exposes the same Claude Code plugins, including the ones in this repo, to both Claude Code (natively) and pi. See `extensions/claude-marketplace/` and the fork notes below.
 - **pi-review** — an always-on review gate for pi: substantive plans are presented as HTML pages with per-section feedback instead of chat prose, and `git commit` is blocked until you approve the staged diff in a review page. Feedback flows back into the session. See [`extensions/pi-review/README.md`](extensions/pi-review/README.md).
+- **herdr-status** — pi's half of the herdr sidebar integration: on session start and after `git push` / `gh pr …` it runs `plugins/workflow-skills/scripts/herdr-status refresh --async`, the same script Claude Code's hook runs. Loaded automatically through this package's `pi.extensions`; inert outside herdr. See [`plugins/workflow-skills/README.md`](../plugins/workflow-skills/README.md#sidebar-status).
 
 **Fork change:** upstream crashed the whole sync when a marketplace manifest used the newer object-form plugin `source` (for example `claude-plugins-official`, `superpowers-marketplace`), which broke all marketplace skill sync since 2026-09-01. This fork skips object-source plugins with a warning instead of crashing. See `extensions/claude-marketplace/test.ts` for the regression test.
 

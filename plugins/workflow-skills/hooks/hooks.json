@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/herdr-status refresh --async",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/herdr-status refresh --async",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "if": "Bash(gh pr *)",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/herdr-status refresh --async",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
