@@ -16,7 +16,9 @@ Use `/ship` when implementation is complete and changes are ready to land. This 
 - `--merge` — Also merge the PR after CI passes (default: stop after CI green)
 - `--no-test` — Skip the test step in pre-flight (lint still runs)
 
-## Steps (execute in order, no confirmation between steps)
+## Steps (execute in order, honor harness approval gates)
+
+A plan or commit review gate still requires user approval. Stop at the gate rather than treating this skill as permission to bypass it.
 
 ### Phase 1: Pre-flight Checks
 
@@ -86,11 +88,11 @@ Run checks in order. If any fails, stop and report — do not proceed to PR:
 
 ### Phase 3: Create PR
 
-```bash
-gh pr create --fill
-```
+Load Matt Pocock's `pr` skill for the body when installed. In Claude Code, use the Skill tool; in pi, read the discovered `pr/SKILL.md` (normally `~/.agents/skills/pr/SKILL.md`). It supplies the change summary, before/after evidence, and merge risk. It does not own branching, committing, CI monitoring, or merging; those stay here.
 
-For multi-commit branches or when richer description is needed:
+If the skill isn't installed, use the fallback below. Do not invent successful verification or hide checks that were skipped.
+
+Create the PR with an explicit title and body:
 
 ```bash
 gh pr create --title "<type>: <description>" --body "$(cat <<'EOF'

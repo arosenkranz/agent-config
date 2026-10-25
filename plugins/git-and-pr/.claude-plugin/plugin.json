@@ -1,5 +1,5 @@
 {
   "name": "git-and-pr",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Git and PR automation — address-pr-feedback, release, worktree management, ship, refine, pin-actions"
 }

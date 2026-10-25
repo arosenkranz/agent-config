@@ -10,7 +10,7 @@
     {
       "name": "workflow-skills",
       "source": "./plugins/workflow-skills",
-      "description": "Daily-driver workflow skills — workspace, planning (morning/end-of-day/weekly), task lifecycle (start-task, patrol, capture), skill meta-tools (find-skills, improve-skills, skill-creator, mcp-builder), and cross-cutting utilities (pdf, xlsx, evolve, optimize, search-first)"
+      "description": "Daily-driver workflow skills — capture, workspace, Herdr automation, plan review, search-first, optimize, and skill-creator. Session retrospectives use the separately installed Matt Pocock retro skill."
     },
     {
       "name": "writing-and-docs",
