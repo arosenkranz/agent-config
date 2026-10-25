@@ -27,6 +27,7 @@ Most skills are conversational and need no external tools. A handful require:
 
 | Tool | Skills that use it | Install |
 |---|---|---|
+| `herdr` | `herdr-cheatsheet` (optional — reads your config and version) | `brew install herdr` |
 | `cmux` | `workspace` | `brew install cmux` |
 | `yazi` | `workspace` | `brew install yazi` |
 | `lazygit` | `workspace` | `brew install lazygit` |

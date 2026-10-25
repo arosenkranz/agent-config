@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Herdr Cheatsheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --surface-2: #efede7;
+    --border: #dedad0;
+    --text: #1d1c1a;
+    --muted: #6b675e;
+    --accent: #0f7b6c;
+    --accent-soft: #d7efe9;
+    --kbd-bg: #ffffff;
+    --kbd-border: #c9c4b7;
+    --kbd-shadow: #c9c4b7;
+    --code: #7a3e9d;
+    --working: #c27c0e;
+    --blocked: #c9382b;
+    --done: #2f8f4e;
+    --idle: #6b675e;
+    --mark: #fff1a8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15161a;
+      --surface: #1d1f24;
+      --surface-2: #25282e;
+      --border: #30333a;
+      --text: #e6e4de;
+      --muted: #9a978f;
+      --accent: #5fd3bc;
+      --accent-soft: #1e3a35;
+      --kbd-bg: #2a2d34;
+      --kbd-border: #40444d;
+      --kbd-shadow: #0c0d10;
+      --code: #d3a6f2;
+      --working: #f0b44c;
+      --blocked: #f07167;
+      --done: #6fd38f;
+      --idle: #9a978f;
+      --mark: #5c5216;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15161a;
+    --surface: #1d1f24;
+    --surface-2: #25282e;
+    --border: #30333a;
+    --text: #e6e4de;
+    --muted: #9a978f;
+    --accent: #5fd3bc;
+    --accent-soft: #1e3a35;
+    --kbd-bg: #2a2d34;
+    --kbd-border: #40444d;
+    --kbd-shadow: #0c0d10;
+    --code: #d3a6f2;
+    --working: #f0b44c;
+    --blocked: #f07167;
+    --done: #6fd38f;
+    --idle: #9a978f;
+    --mark: #5c5216;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 140px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 Inter, system-ui, sans-serif;
+  }
+  code, kbd, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar {
+    max-width: 1200px; margin: 0 auto; padding: 14px 16px 10px;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+  .brand h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  .brand h1 span { color: var(--accent); font-family: "JetBrains Mono", monospace; }
+  .brand small { color: var(--muted); font-size: 12px; }
+
+  .search {
+    flex: 1 1 280px; max-width: 420px; position: relative;
+  }
+  .search input {
+    width: 100%; padding: 9px 36px 9px 12px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    font: inherit; outline: none;
+  }
+  .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .search .hint {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    pointer-events: none;
+  }
+  .icon-btn {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 10px; cursor: pointer; font: inherit; line-height: 1;
+  }
+  .icon-btn:hover { border-color: var(--accent); }
+
+  .filters {
+    max-width: 1200px; margin: 0 auto; padding: 0 16px 12px;
+    display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: none;
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    border-radius: 999px; padding: 4px 12px; font-size: 13px; cursor: pointer; font-family: inherit;
+  }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 64px; }
+
+  .intro {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 20px; color: var(--muted);
+  }
+  .intro strong { color: var(--text); }
+
+  .grid {
+    columns: 3 340px; column-gap: 20px;
+  }
+  section.card {
+    break-inside: avoid; display: inline-block; width: 100%;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    margin: 0 0 20px; overflow: hidden;
+  }
+  .card h2 {
+    margin: 0; padding: 12px 16px; font-size: 14px; letter-spacing: 0.02em;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  .card h2 .tag {
+    margin-left: auto; font-size: 11px; font-weight: 500; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .card .blurb { padding: 10px 16px 0; margin: 0; color: var(--muted); font-size: 13px; }
+  .card ul { list-style: none; margin: 0; padding: 6px 0; }
+  .card li {
+    display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 4px 14px;
+    padding: 7px 16px; align-items: baseline;
+  }
+  .card li.cmd { grid-template-columns: 1fr; cursor: pointer; }
+  .card li.cmd:hover { background: var(--surface-2); }
+  .card li.cmd:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .card li .desc { color: var(--text); font-size: 14px; }
+  .card li .note { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; }
+  .card li.cmd .note { grid-column: auto; }
+
+  .keys { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; white-space: nowrap; }
+  .keys .sep { color: var(--muted); font-size: 12px; }
+  kbd {
+    display: inline-block; min-width: 1.6em; text-align: center;
+    padding: 1px 6px; font-size: 12.5px; font-weight: 500;
+    background: var(--kbd-bg); color: var(--text);
+    border: 1px solid var(--kbd-border); border-bottom-width: 2px;
+    border-radius: 5px; box-shadow: 0 1px 0 var(--kbd-shadow);
+  }
+  kbd.prefix { color: var(--accent); border-color: var(--accent); }
+  .cmd code {
+    display: block; font-size: 13px; color: var(--code);
+    white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .cmd code::before { content: "$ "; color: var(--muted); }
+  .cmd.plain code::before { content: ""; }
+
+  .states { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+
+  mark { background: var(--mark); color: inherit; border-radius: 2px; }
+  .empty { text-align: center; color: var(--muted); padding: 48px 0; display: none; }
+
+  footer { color: var(--muted); font-size: 13px; text-align: center; padding: 0 16px 32px; }
+  footer a { color: var(--accent); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px);
+    background: var(--text); color: var(--bg); padding: 8px 14px; border-radius: 8px;
+    font-size: 13px; opacity: 0; transition: opacity .15s, transform .15s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 560px) {
+    .brand small { display: none; }
+    .card li { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <h1><span>herdr</span> cheatsheet</h1>
+      <small id="version">default bindings</small>
+    </div>
+    <div class="search">
+      <input id="q" type="search" placeholder="Search keys, commands, actions…" autocomplete="off" aria-label="Search">
+      <span class="hint"><kbd>/</kbd></span>
+    </div>
+    <button class="icon-btn" id="theme" title="Toggle light/dark" aria-label="Toggle theme">◐</button>
+  </div>
+  <nav class="filters" id="filters" aria-label="Filter by category"></nav>
+</header>
+
+<main>
+  <div class="intro">
+    <strong>Prefix = <kbd class="prefix">ctrl+b</kbd>.</strong>
+    <kbd>prefix</kbd> <kbd>c</kbd> means: press <kbd>ctrl+b</kbd>, release, then press <kbd>c</kbd>.
+    Forgot something? <kbd class="prefix">prefix</kbd> <kbd>?</kbd> shows every active binding inside Herdr.
+    Click any <code class="mono">$ command</code> below to copy it.
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty">No matches. Try a shorter search.</p>
+</main>
+
+<footer>
+  Built from <code>herdr --help</code>, <code>herdr --default-config</code>, and
+  <a href="https://herdr.dev/docs/keyboard/" target="_blank" rel="noopener">herdr.dev/docs</a>.
+  Your own <code>~/.config/herdr/config.toml</code> may override these.
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Content lives in cheatsheet-data.js (shared with the herdr-cheatsheet skill).
+     A <script src> works from file://, unlike fetch() of a .json file. -->
+<script src="cheatsheet-data.js"></script>
+<script>
+// Each section: kind drives the filter chips. Items are either
+// { keys: [...], desc } for keybindings or { cmd, desc } for copyable commands.
+const SECTIONS = window.HERDR_CHEATSHEET.sections;
+document.getElementById("version").textContent = `v${window.HERDR_CHEATSHEET.herdrVersion} · default bindings`;
+
+const FILTERS = [
+  ["all", "All"], ["keys", "Keyboard"], ["mouse", "Mouse"], ["cli", "CLI"],
+  ["config", "Config"], ["concepts", "Concepts"], ["trouble", "Troubleshooting"],
+];
+const TAGS = { keys: "keys", mouse: "mouse", cli: "cli", config: "config", concepts: "learn", trouble: "fix" };
+const STATE_COLORS = { working: "--working", blocked: "--blocked", done: "--done", idle: "--idle", unknown: "--border" };
+
+const grid = document.getElementById("grid");
+const q = document.getElementById("q");
+const empty = document.getElementById("empty");
+const toast = document.getElementById("toast");
+let activeFilter = "all";
+
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function highlight(text, term) {
+  const safe = esc(text);
+  if (!term) return safe;
+  const re = new RegExp("(" + term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "gi");
+  return safe.replace(re, "<mark>$1</mark>");
+}
+
+function renderKeys(keys, term) {
+  return keys.map(k => {
+    if (k === "/") return '<span class="sep">or</span>';
+    const cls = k === "prefix" ? ' class="prefix"' : "";
+    return `<kbd${cls}>${highlight(k, term)}</kbd>`;
+  }).join("");
+}
+
+function itemText(it) {
+  return [it.desc, it.cmd, it.term, it.state, ...(it.keys || [])].filter(Boolean).join(" ").toLowerCase();
+}
+
+function renderItem(it, term) {
+  if (it.cmd) {
+    return `<li class="cmd${it.plain ? " plain" : ""}" tabindex="0" data-copy="${esc(it.cmd)}" title="Click to copy">
+      <code>${highlight(it.cmd, term)}</code>
+      <span class="note">${highlight(it.desc, term)}</span></li>`;
+  }
+  if (it.state) {
+    return `<li><span class="keys"><span class="dot" style="background:var(${STATE_COLORS[it.state]})"></span>
+      <code class="mono">${highlight(it.state, term)}</code></span>
+      <span class="desc">${highlight(it.desc, term)}</span></li>`;
+  }
+  if (it.term) {
+    return `<li><strong>${highlight(it.term, term)}</strong><span class="desc">${highlight(it.desc, term)}</span></li>`;
+  }
+  return `<li><span class="keys">${renderKeys(it.keys, term)}</span><span class="desc">${highlight(it.desc, term)}</span></li>`;
+}
+
+function render() {
+  const term = q.value.trim().toLowerCase();
+  let shown = 0;
+  grid.innerHTML = SECTIONS.map(sec => {
+    if (activeFilter !== "all" && sec.kind !== activeFilter) return "";
+    const titleHit = term && (sec.title + " " + (sec.blurb || "")).toLowerCase().includes(term);
+    const items = sec.items.filter(it => !term || titleHit || itemText(it).includes(term));
+    if (!items.length) return "";
+    shown++;
+    return `<section class="card" id="${sec.id}">
+      <h2>${highlight(sec.title, term)}<span class="tag">${TAGS[sec.kind]}</span></h2>
+      ${sec.blurb ? `<p class="blurb">${highlight(sec.blurb, term)}</p>` : ""}
+      <ul>${items.map(it => renderItem(it, term)).join("")}</ul></section>`;
+  }).join("");
+  empty.style.display = shown ? "none" : "block";
+}
+
+document.getElementById("filters").innerHTML = FILTERS.map(([id, label]) =>
+  `<button class="chip" data-filter="${id}" aria-pressed="${id === "all"}">${label}</button>`).join("");
+document.getElementById("filters").addEventListener("click", e => {
+  const btn = e.target.closest(".chip");
+  if (!btn) return;
+  activeFilter = btn.dataset.filter;
+  document.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c === btn));
+  render();
+});
+
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 1400);
+}
+
+async function copy(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("Copied");
+  } catch {
+    // file:// pages in some browsers block the async clipboard API
+    const ta = Object.assign(document.createElement("textarea"), { value: text });
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    showToast(ok ? "Copied" : "Copy failed — select the text manually");
+  }
+}
+
+grid.addEventListener("click", e => {
+  const li = e.target.closest("li.cmd");
+  if (li) copy(li.dataset.copy);
+});
+grid.addEventListener("keydown", e => {
+  const li = e.target.closest("li.cmd");
+  if (li && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); copy(li.dataset.copy); }
+});
+
+q.addEventListener("input", render);
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); q.select(); }
+  else if (e.key === "Escape" && document.activeElement === q) { q.value = ""; render(); q.blur(); }
+});
+
+const root = document.documentElement;
+function readTheme() { try { return localStorage.getItem("herdr-cheatsheet-theme"); } catch { return null; } }
+function saveTheme(t) { try { localStorage.setItem("herdr-cheatsheet-theme", t); } catch {} }
+const saved = readTheme();
+if (saved) root.dataset.theme = saved;
+document.getElementById("theme").addEventListener("click", () => {
+  const isDark = root.dataset.theme
+    ? root.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = isDark ? "light" : "dark";
+  saveTheme(root.dataset.theme);
+});
+
+render();
+</script>
+</body>
+</html>
