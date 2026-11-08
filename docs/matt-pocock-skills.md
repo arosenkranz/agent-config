@@ -31,7 +31,7 @@ Restart Claude Code and run `/reload` in pi after installation. Native commands 
 - **Clear tasks:** implement directly. Don't impose an interview, spec, or unsolicited planning document on every request. If a substantive plan is needed, use the harness presentation gate when available.
 - **Skill loading:** in Claude use its Skill tool. In pi, where upstream says to call a Skill tool or another `/skill`, read the discovered skill's `SKILL.md` and its required references. Shared skills normally live under `~/.agents/skills/`. Resolve bundled relative references against that skill's directory.
 - **Explicit-only flows:** preserve `disable-model-invocation`. A user-invoked flow may call its documented helpers; merely installing it does not start a spec/ticket/implementation pipeline.
-- **Planning and review:** Goldeneye critiques remain available when requested or required by the shared workflow. Matt's code review checks Standards and Spec; don't add a second mandatory copy of that review. Define the comparison base and include uncommitted work when reviewing a working tree.
+- **Planning and review:** Matt's code review checks Standards and Spec; don't add a second mandatory copy of that review. Define the comparison base and include uncommitted work when reviewing a working tree.
 - **Delegation:** only launch agents when authorized by the user or applicable project instructions. If a required agent can't start, stop that flow, explain the failure, and ask before skipping the stage or switching runners. Don't quietly replace background research or parallel implementation with a different CLI.
 - **Tests:** use the task's existing test policy. Choosing Matt's TDD flow includes agreeing the public test boundaries first. It does not create an extra interview requirement for tasks outside that flow.
 - **Git and publication:** create a feature branch before implementation. Matt's `implement` instruction to commit to the current branch never authorizes a commit to main. Honor commit review gates. `ship` owns checks, commit, push, PR, and CI; Matt's `pr` owns the body only. Avoid duplicate commits if implementation already committed the work.
@@ -58,13 +58,13 @@ Restart Claude and `/reload` pi. Until publication, the shared policy above reti
 
 For both harnesses, the host instruction file should point to this document and the shared git workflow by absolute checkout path. Claude's four `~/.claude/rules/*.md` links should point to this checkout's `plugins/dev-environment/commands/`, not the former `claude-code-config` path.
 
-## Known pi subagent blocker
+## Known pi subagent blocker (resolved)
 
-At integration time, pi 1.4.0 plus `pi-subagents` 0.77.0 could not start background children. Its `src/runs/background/runner-aliases.js` exempts only stable `0.x` hosts below 0.85 from requiring `@earendil-works/chord` and `@earendil-works/chord/context`. Pi 1.4.0 declares neither package, so the check rejects the launch before a child session starts.
+At integration time, pi 1.4.0 plus `pi-subagents` 0.77.0 could not start background children. Its `src/runs/background/runner-aliases.js` required `@earendil-works/chord` and `@earendil-works/chord/context`, and pi 1.4.0 declared neither package, so the check rejected the launch before a child session started.
 
-This is a compatibility-check mismatch, not evidence that installing chord into pi is the correct repair. The integration doesn't change pi packages. Background-dependent skills remain blocked until that issue is separately resolved. Report the actual launch result rather than assuming this note describes every future version.
+Current versions resolve this: `pi-subagents` 0.87.0 only requires the chord packages when the host manifest declares them (pi 0.85 through 1.1), and pi 1.5.0 declares neither. Background children launch again — verified live on this host. The proposal critiques the old check blocked are moot; the agent plugin they would have reviewed has since been retired. Re-check after upgrading either package rather than assuming this note describes every future version.
 
-The Goldeneye proposal critiques failed for this reason. The user authorized this integration without those reviews; that waiver is specific to this task, not a standing waiver for later work.
+That compatibility mismatch was never evidence that installing chord into pi was the correct repair; nothing here changes pi packages.
 
 ## Rollback
 
