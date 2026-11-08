@@ -2,9 +2,8 @@
 
 ## Architecture
 
-This repo is a personal agent configuration published as a Claude Code marketplace with 7 plugins (35 skills, 6 agents total):
+This repo is a personal agent configuration published as a Claude Code marketplace with 6 plugins (33 skills total):
 - `workflow-skills` — daily-driver workflow skills invocable via `/name`
-- `goldeneye-agents` — specialized subagents (boris, m, natalya, q, trevelyan, xenia)
 - `dev-environment` — lifecycle hooks, commands (coding standards)
 - `backend-and-infra` — backend, infra, homelab, and language skills
 - `web-and-frontend` — Astro, frontend, browser automation, design review
@@ -12,8 +11,7 @@ This repo is a personal agent configuration published as a Claude Code marketpla
 - `obsidian-and-notes` — Obsidian vault search and note skills
 
 Plugins auto-discover their content via `${CLAUDE_PLUGIN_ROOT}`. No symlinks needed.
-Skills are discovered from `plugins/<plugin>/skills/<name>/SKILL.md`; agents from
-`plugins/goldeneye-agents/agents/<name>.md`.
+Skills are discovered from `plugins/<plugin>/skills/<name>/SKILL.md`.
 
 ## Setting up on a new machine
 
@@ -31,7 +29,6 @@ Add to `~/.claude/settings.json`:
   },
   "enabledPlugins": {
     "workflow-skills@arosenkranz-claude-plugins": true,
-    "goldeneye-agents@arosenkranz-claude-plugins": true,
     "dev-environment@arosenkranz-claude-plugins": true,
     "backend-and-infra@arosenkranz-claude-plugins": true,
     "web-and-frontend@arosenkranz-claude-plugins": true,
@@ -51,12 +48,6 @@ cp config-templates/CLAUDE.md.template ~/.claude/CLAUDE.md
 1. Create `plugins/workflow-skills/skills/<name>/SKILL.md` with `name` and `description` frontmatter
 2. Add any references, templates, or scripts in the same directory
 3. No registration needed — but bump the plugin version before merging (see [Shipping plugin changes](#shipping-plugin-changes))
-
-## Adding a new agent
-
-1. Create `plugins/goldeneye-agents/agents/<name>.md`
-2. Include the agent's system prompt and trigger conditions
-3. Auto-discovered — no registration needed; bump `goldeneye-agents`' version before merging
 
 ## Shipping plugin changes
 

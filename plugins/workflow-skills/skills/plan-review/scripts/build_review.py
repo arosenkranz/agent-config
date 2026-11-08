@@ -38,15 +38,15 @@ def escape_html(text: str) -> str:
 
 
 def render_html(plan_title: str, source_path: str, generated_at: str, critique: dict, sections: list) -> str:
-    trevelyan_text = critique.get("trevelyan")
-    m_text = critique.get("m")
+    adversarial_text = critique.get("adversarial")
+    architecture_text = critique.get("architecture")
 
     def critique_block(label, text):
         if text:
             return f'<div class="critique-agent"><h3>{escape_html(label)}</h3><pre>{escape_html(text)}</pre></div>'
         return f'<div class="critique-agent critique-missing"><h3>{escape_html(label)}</h3><p>Critique unavailable.</p></div>'
 
-    critique_html = critique_block("Trevelyan", trevelyan_text) + critique_block("M", m_text)
+    critique_html = critique_block("Adversarial reviewer", adversarial_text) + critique_block("Architecture reviewer", architecture_text)
 
     section_blocks = []
     for section in sections:
@@ -94,7 +94,7 @@ def render_html(plan_title: str, source_path: str, generated_at: str, critique: 
 </header>
 
 <details class="critique-panel" open>
-  <summary><strong>Goldeneye Review</strong> (trevelyan + m)</summary>
+  <summary><strong>Plan critique</strong> (adversarial + architecture)</summary>
   {critique_html}
 </details>
 
@@ -170,7 +170,7 @@ import datetime
 import os
 
 
-def build_review(plan_path: str, trevelyan_critique: str | None, m_critique: str | None, output_dir: str = "/tmp") -> str:
+def build_review(plan_path: str, adversarial_critique: str | None, architecture_critique: str | None, output_dir: str = "/tmp") -> str:
     with open(plan_path, "r", encoding="utf-8") as f:
         plan_text = f.read()
 
@@ -189,7 +189,7 @@ def build_review(plan_path: str, trevelyan_critique: str | None, m_critique: str
         plan_title=plan_title,
         source_path=plan_path,
         generated_at=generated_at,
-        critique={"trevelyan": trevelyan_critique, "m": m_critique},
+        critique={"adversarial": adversarial_critique, "architecture": architecture_critique},
         sections=sections,
     )
 
@@ -209,15 +209,17 @@ def _read_optional_file(path):
 def main():
     parser = argparse.ArgumentParser(description="Generate an interactive HTML plan review page.")
     parser.add_argument("plan_path", help="Path to the plan markdown file")
-    parser.add_argument("--trevelyan-file", help="Path to a file containing trevelyan's critique text")
-    parser.add_argument("--m-file", help="Path to a file containing m's critique text")
+    parser.add_argument("--adversarial-file", help="Path to a file containing the adversarial reviewer's critique text")
+    parser.add_argument("--architecture-file", help="Path to a file containing the architecture reviewer's critique text")
+    parser.add_argument("--trevelyan-file", dest="adversarial_file", help=argparse.SUPPRESS)
+    parser.add_argument("--m-file", dest="architecture_file", help=argparse.SUPPRESS)
     parser.add_argument("--output-dir", default="/tmp", help="Directory to write the generated HTML file (default: /tmp)")
     args = parser.parse_args()
 
-    trevelyan_critique = _read_optional_file(args.trevelyan_file)
-    m_critique = _read_optional_file(args.m_file)
+    adversarial_critique = _read_optional_file(args.adversarial_file)
+    architecture_critique = _read_optional_file(args.architecture_file)
 
-    output_path = build_review(args.plan_path, trevelyan_critique, m_critique, args.output_dir)
+    output_path = build_review(args.plan_path, adversarial_critique, architecture_critique, args.output_dir)
     print(output_path)
 
 

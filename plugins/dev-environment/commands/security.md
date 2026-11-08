@@ -8,7 +8,7 @@ Never hardcode secrets (API keys, passwords, tokens). Read them from environment
 
 If a security issue is found:
 1. STOP immediately
-2. Use the **boris** agent to assess scope and severity
+2. Assess the scope and severity directly (or with an available security-focused reviewer agent)
 3. Fix CRITICAL issues before continuing other work
 4. Rotate any exposed secrets
 5. Review the codebase for similar issues

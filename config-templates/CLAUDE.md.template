@@ -22,7 +22,7 @@
 
 1. **Branch and PR by default.** Create a feature branch before implementation. Use `ship` for checks, commit, push, PR, and CI; merge only when asked. Keep commit messages short and use squash merge by default.
 2. **Match the request.** Implement clear tasks directly. Clarify consequential unknowns. Don't create planning documents, specs, tickets, labels, or glossaries unless the requested scope calls for them. Present substantive plans through the harness review tool when available and wait for feedback.
-3. **Pressure-test consequential choices.** Follow the shared workflow's Goldeneye review requirements. If a reviewer can't start, report the blocker and ask before bypassing review or changing runners.
+3. **Pressure-test consequential choices.** Run non-trivial plans past an available reviewer agent or the harness plan-review tool before committing to them. If a reviewer can't start, report the blocker and ask before bypassing review or changing runners.
 4. **Test behavior.** Write tests alongside code. For UI/runtime bugs, also observe the behavior in a real browser. Follow the project's lint/typecheck/test commands before committing.
 5. **One scoped task.** Keep unrelated cleanup out of the branch. Note separate issues rather than silently expanding the change.
 6. **Honor approval gates.** A skill's instruction to commit or publish does not override the branch policy or harness gates. Delegate only when the user or applicable project instructions authorize it.

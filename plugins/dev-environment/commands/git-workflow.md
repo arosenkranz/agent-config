@@ -72,7 +72,7 @@ When creating PRs:
    - When using Matt's skills, read `docs/matt-pocock-skills.md` in the agent-config checkout for harness adaptation and workflow boundaries.
 
 2. **Pressure-test the approach**
-   - Run the plan or diagnosis past the goldeneye agents before committing to it: **trevelyan** (challenge assumptions, find logical flaws) and **m** (architecture/planning).
+   - Run the plan or diagnosis past an available reviewer agent before committing to it: one adversarial pass (challenge assumptions, find logical flaws) and one architecture/planning pass.
    - Treat their critique as input, not gospel — verify claims before acting on them.
    - If agents cannot start, report the blocker and ask before skipping review or changing runners. Present substantive plans through the harness's review tool when available.
 
@@ -81,7 +81,7 @@ When creating PRs:
    - For UI/runtime changes, verify in a real browser session, not just via tests.
 
 4. **Review**
-   - Self-review the diff, then use Matt's `code-review` skill for Standards and Spec review, or **trevelyan** for an adversarial review. Extra review perspectives are optional, not duplicate mandatory stages.
+   - Self-review the diff, then use Matt's `code-review` skill for Standards and Spec review, or an available adversarial reviewer agent. Extra review perspectives are optional, not duplicate mandatory stages.
    - If a review needs unavailable subagents, report the blocker and get permission for a direct review.
    - Address CRITICAL and HIGH issues; fix MEDIUM when reasonable.
 

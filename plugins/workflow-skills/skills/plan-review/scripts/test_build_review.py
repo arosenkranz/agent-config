@@ -50,7 +50,7 @@ def test_render_html_includes_sections_and_critique_and_escapes_content():
         plan_title="Sample Plan",
         source_path="/tmp/sample.md",
         generated_at="2026-07-13 10:00:00",
-        critique={"trevelyan": "Watch for race conditions.", "m": None},
+        critique={"adversarial": "Watch for race conditions.", "architecture": None},
         sections=sections,
     )
     assert "Sample Plan" in html_out
@@ -73,8 +73,8 @@ def test_build_review_writes_html_file_and_returns_path(tmp_path):
 
     output_path = build_review(
         plan_path=str(plan_file),
-        trevelyan_critique="Looks risky.",
-        m_critique=None,
+        adversarial_critique="Looks risky.",
+        architecture_critique=None,
         output_dir=str(tmp_path),
     )
 

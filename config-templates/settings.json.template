@@ -20,7 +20,6 @@
   },
   "enabledPlugins": {
     "workflow-skills@arosenkranz-claude-plugins": true,
-    "goldeneye-agents@arosenkranz-claude-plugins": true,
     "dev-environment@arosenkranz-claude-plugins": true
   },
   "_comment": "Hooks are defined per-plugin in hooks.json — do not add hooks here. Customize permissions, model, outputStyle, etc. per machine."

@@ -61,7 +61,6 @@ ls -la ~/.claude/skills/
 **List all installed agents:**
 ```bash
 ls ~/.claude/agents/ 2>/dev/null
-ls "$AGENT_CONFIG/plugins/goldeneye-agents/agents/"
 ```
 
 **For each skill**, read its `SKILL.md` frontmatter to extract `name` and `description`:
