@@ -9,7 +9,7 @@ Turn a plan markdown file into an interactive HTML page for critique and feedbac
 
 ## When to use
 
-- Automatically, per CLAUDE.md Guardrail #9, before a non-trivial plan is presented for approval.
+- Automatically, before a non-trivial plan is presented for approval (per the host instruction file's pressure-test rule).
 - Explicitly via `/plan-review <path-to-plan.md>`.
 
 ## Steps
@@ -32,4 +32,4 @@ Turn a plan markdown file into an interactive HTML page for critique and feedbac
 
 5. **Wait for feedback.** Tell the user the page is open, ask them to review the critique, leave feedback per-section and/or generally, choose Approve/Request changes, click "Copy Feedback", and paste the result back into the conversation. Do not proceed with the plan until they respond.
 
-6. **Incorporate feedback.** Once the user pastes their feedback Markdown, treat it like any other plan-approval response per Guardrail #2 — revise and re-present if changes were requested, proceed if approved.
+6. **Incorporate feedback.** Once the user pastes their feedback Markdown, treat it like any other plan-approval response — revise and re-present if changes were requested, proceed if approved.
