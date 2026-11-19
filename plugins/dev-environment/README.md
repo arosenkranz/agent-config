@@ -21,7 +21,7 @@ All lifecycle hooks are consolidated here for deterministic ordering.
 Coding standards distributed as commands — invoke via `/dev-environment:coding-style`, etc.
 
 - `coding-style` — Immutability, file organization, error handling
-- `git-workflow` — Commit format, PR workflow, gh CLI usage
+- `git-workflow` — Commit format, PR workflow, feature implementation workflow
 - `memory-system` — Auto-memory system guidelines
 - `performance` — Model selection, context management, ultrathink
 - `security` — Mandatory security checks, secret management
