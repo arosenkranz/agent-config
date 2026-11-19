@@ -26,7 +26,7 @@ Turn a plan markdown file into an interactive HTML page for critique and feedbac
    ```bash
    python3 <this skill's directory>/scripts/build_review.py <plan_path> --adversarial-file /tmp/plan-review-adversarial.txt --architecture-file /tmp/plan-review-architecture.txt
    ```
-   This prints the generated file path (e.g. `/tmp/claude-plan-review-<slug>-<timestamp>.html`). The deprecated `--trevelyan-file`/`--m-file` flags still work as aliases.
+   This prints the generated file path (e.g. `/tmp/claude-plan-review-<slug>-<timestamp>.html`).
 
 4. **Open it.** Run `open <printed path>`.
 
