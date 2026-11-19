@@ -211,8 +211,6 @@ def main():
     parser.add_argument("plan_path", help="Path to the plan markdown file")
     parser.add_argument("--adversarial-file", help="Path to a file containing the adversarial reviewer's critique text")
     parser.add_argument("--architecture-file", help="Path to a file containing the architecture reviewer's critique text")
-    parser.add_argument("--trevelyan-file", dest="adversarial_file", help=argparse.SUPPRESS)
-    parser.add_argument("--m-file", dest="architecture_file", help=argparse.SUPPRESS)
     parser.add_argument("--output-dir", default="/tmp", help="Directory to write the generated HTML file (default: /tmp)")
     args = parser.parse_args()
 
