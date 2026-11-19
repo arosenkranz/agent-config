@@ -56,7 +56,7 @@ claude plugin update git-and-pr@arosenkranz-claude-plugins
 
 Restart Claude and `/reload` pi. Until publication, the shared policy above retires the old skill behavior even if the installed plugin still lists it. Don't hand-edit plugin caches or the pi marketplace checkout to simulate a release.
 
-For both harnesses, the host instruction file should point to this document and the shared git workflow by absolute checkout path. Claude's four `~/.claude/rules/*.md` links should point to this checkout's `plugins/dev-environment/commands/`, not the former `claude-code-config` path.
+For both harnesses, the host instruction file should point to this document and the shared git workflow by absolute checkout path. Global `~/.claude/rules/*.md` links are intentionally not used; the same standards are available on demand as `/dev-environment` slash commands from `plugins/dev-environment/commands/`.
 
 ## Known pi subagent blocker (resolved)
 
@@ -68,9 +68,9 @@ That compatibility mismatch was never evidence that installing chord into pi was
 
 ## Rollback
 
-Back up host settings, global instructions, rule links, and `~/.agents/.skill-lock.json` before changing them. These files are machine-local and must not be committed. Existing agent settings and skill files must remain intact.
+Back up host settings, global instructions, and `~/.agents/.skill-lock.json` before changing them. These files are machine-local and must not be committed. Existing agent settings and skill files must remain intact.
 
-To undo this set, verify the receipt first, remove only its named Claude links and canonical directories, then remove the receipt. Remove the corresponding source-lock entries without deleting entries for other skills. Restore the backed-up settings/instructions/rule links. Re-enable official helpers if desired; Superpowers must be reinstalled, and its persistent data was preserved. Revert tracked changes through git, not plugin-cache edits.
+To undo this set, verify the receipt first, remove only its named Claude links and canonical directories, then remove the receipt. Remove the corresponding source-lock entries without deleting entries for other skills. Restore the backed-up settings and instructions. Re-enable official helpers if desired; Superpowers must be reinstalled, and its persistent data was preserved. Revert tracked changes through git, not plugin-cache edits.
 
 ## Sources and audit
 
